@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Real Ngempela Recovery Centre · Quantum Healing</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #00B4D8;
+            --primary-dark: #0096C7;
+            --secondary: #00F5D4;
+            --quantum: #8A2BE2;
+            --quantum-glow: rgba(138,43,226,0.4);
+            --success: #00FF88;
+            --warning: #FFD166;
+            --danger: #EF476F;
+            --gold: #FFD700;
+            --healing: #FF6B9D;
+            --healing-glow: rgba(255,107,157,0.3);
+            --dark-bg: #05080F;
+            --dark-card: #0A0F1A;
+            --glass-border: rgba(0,180,216,0.25);
+            --text-primary: #E8EDF5;
+            --text-secondary: #8A99B0;
+            --font-exo: 'Exo 2', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+        
+        body { font-family: var(--font-exo); background: var(--dark-bg); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+        #particles-js { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+        
+        .glass-card, .stat-card, .login-card { background: rgba(15,25,45,0.45); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 28px; transition: all 0.3s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .glass-card:hover, .stat-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .glass-card.healing-glow { border-color: var(--healing); box-shadow: 0 0 30px var(--healing-glow); }
+        .glass-card.quantum-glow { border-color: var(--quantum); box-shadow: 0 0 30px var(--quantum-glow); }
+        .glass-card.gold-glow { border-color: var(--gold); box-shadow: 0 0 30px rgba(255,215,0,0.3); }
+        
+        @keyframes glassPulse {
+            0% { border-color: rgba(0,180,216,0.3); box-shadow: 0 0 0 0 rgba(0,180,216,0.1); }
+            50% { border-color: rgba(138,43,226,0.6); box-shadow: 0 0 30px 5px var(--quantum-glow); }
+            100% { border-color: rgba(0,180,216,0.3); box-shadow: 0 0 0 0 rgba(0,180,216,0.1); }
+        }
+        
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,8,15,0.98); backdrop-filter: blur(20px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column; }
+        .login-overlay.hidden { display: none; }
+        .login-card { max-width: 480px; width: 100%; padding: 40px 32px; text-align: center; animation: glassPulse 4s ease-in-out infinite; }
+        .login-logo { max-width: 280px; width: 100%; margin-bottom: 20px; filter: drop-shadow(0 0 30px var(--gold)); display: block; margin: 0 auto 20px; }
+        .login-title { font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--healing)); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 4px; }
+        .login-subtitle { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 25px; font-family: var(--font-mono); letter-spacing: 2px; }
+        .login-trial { font-size: 0.7rem; color: var(--gold); margin-bottom: 15px; background: rgba(255,215,0,0.1); padding: 8px 16px; border-radius: 30px; display: inline-block; }
+        
+        .auth-separator { display: flex; align-items: center; gap: 15px; margin: 16px 0; color: var(--text-secondary); font-size: 0.65rem; }
+        .auth-separator::before, .auth-separator::after { content: ""; flex: 1; height: 1px; background: var(--glass-border); }
+        .login-error { color: var(--danger); font-size: 0.8rem; margin-top: 10px; min-height: 20px; }
+        
+        .btn-primary-custom { border: none; padding: 14px; border-radius: 60px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; color: white; transition: all 0.2s; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .btn-primary-custom:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .btn-google { background: #4285F4; box-shadow: 0 4px 15px rgba(66,133,244,0.3); }
+        .btn-google:hover { box-shadow: 0 8px 25px rgba(66,133,244,0.5); }
+        .btn-demo { background: linear-gradient(135deg, var(--gold), var(--healing)); box-shadow: 0 4px 15px rgba(255,107,157,0.3); }
+        .btn-demo:hover { box-shadow: 0 8px 25px rgba(255,107,157,0.5); }
+        .btn-whatsapp { background: #25D366; box-shadow: 0 4px 15px rgba(37,211,102,0.3); }
+        .btn-whatsapp:hover { box-shadow: 0 8px 25px rgba(37,211,102,0.5); }
+        .btn-submit { background: linear-gradient(135deg, var(--gold), var(--healing)); box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
+        .btn-submit:hover { box-shadow: 0 8px 25px rgba(255,215,0,0.5); }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--glass-border); margin-bottom: 25px; }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .header-logo { height: 45px; filter: drop-shadow(0 0 15px var(--gold)); }
+        .brand-text h1 { font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--healing)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .brand-text p { font-size: 0.5rem; color: var(--text-secondary); letter-spacing: 2px; font-family: var(--font-mono); }
+        .user-area { display: flex; align-items: center; gap: 15px; background: rgba(15,25,45,0.45); backdrop-filter: blur(16px); padding: 6px 16px; border-radius: 60px; border: 1px solid var(--glass-border); }
+        .user-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--gold), var(--healing)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; overflow: hidden; }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-email { font-size: 0.7rem; font-family: var(--font-mono); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .logout-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem; }
+        .logout-btn:hover { color: var(--danger); }
+        
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 25px; }
+        .stat-card { padding: 18px; text-align: center; border-radius: 20px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--healing)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .stat-label { font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px; font-family: var(--font-mono); }
+        
+        .top-menu { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 25px; }
+        .menu-btn { background: rgba(15,25,45,0.45); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 10px 18px; color: white; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.3s; font-family: var(--font-exo); }
+        .menu-btn:hover, .menu-btn.active { background: rgba(0,180,216,0.3); border-color: var(--primary); color: var(--secondary); transform: translateY(-2px); }
+        .menu-btn.gold:hover, .menu-btn.gold.active { background: rgba(255,215,0,0.2); border-color: var(--gold); color: var(--gold); }
+        .menu-btn.healing:hover, .menu-btn.healing.active { background: rgba(255,107,157,0.2); border-color: var(--healing); color: var(--healing); }
+        .menu-btn.quantum:hover, .menu-btn.quantum.active { background: rgba(138,43,226,0.3); border-color: var(--quantum); color: var(--quantum); }
+        
+        .section { display: none; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-card { padding: 24px; margin-bottom: 20px; }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border); }
+        .card-header i { font-size: 1.4rem; color: var(--primary); }
+        .card-header h3 { font-size: 1.1rem; font-weight: 600; }
+        .card-header.gold i { color: var(--gold); }
+        .card-header.healing i { color: var(--healing); }
+        .card-header.quantum i { color: var(--quantum); }
+        
+        .sober-counter { font-size: 4rem; font-weight: 900; text-align: center; padding: 20px; background: linear-gradient(135deg, var(--gold), var(--healing)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .sober-label { text-align: center; color: var(--text-secondary); font-size: 1rem; }
+        .milestone-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 15px 0; }
+        .milestone-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--healing)); border-radius: 10px; transition: width 0.5s ease; }
+        .milestone-text { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); }
+        
+        .prayer-card { background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); border-radius: 16px; padding: 20px; margin: 10px 0; }
+        .prayer-card .quote { font-size: 1.1rem; font-style: italic; color: var(--gold); line-height: 1.6; }
+        .prayer-card .author { text-align: right; color: var(--text-secondary); font-size: 0.8rem; margin-top: 10px; }
+        
+        .chat-messages { height: 250px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 16px; padding: 15px; margin-bottom: 12px; }
+        .chat-message { padding: 10px 14px; margin-bottom: 10px; border-radius: 18px; max-width: 85%; font-size: 0.9rem; line-height: 1.5; }
+        .chat-message.user { background: var(--primary); margin-left: auto; text-align: right; }
+        .chat-message.ai { background: rgba(255,255,255,0.08); border-left: 2px solid var(--gold); }
+        .chat-input-group { display: flex; gap: 10px; align-items: center; }
+        .chat-input { flex: 1; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 60px; color: white; font-family: var(--font-exo); }
+        .chat-send { background: var(--primary); border: none; border-radius: 60px; padding: 12px 24px; color: white; cursor: pointer; font-weight: 600; }
+        .chat-send.gold { background: var(--gold); color: #000; }
+        .chat-send.healing { background: var(--healing); color: #000; }
+        
+        .quiz-option { display: block; width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; color: white; cursor: pointer; margin-bottom: 8px; text-align: left; transition: 0.2s; }
+        .quiz-option:hover { background: rgba(0,180,216,0.2); border-color: var(--primary); }
+        .quiz-option.correct { background: var(--success); color: #000; }
+        .quiz-option.wrong { background: var(--danger); }
+        
+        .chess-board-wrapper { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+        #chessBoard { width: 100%; max-width: 450px; aspect-ratio: 1/1; }
+        .chess-sidebar { flex: 1; min-width: 200px; }
+        .chess-sidebar .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--glass-border); font-size: 0.85rem; }
+        .chess-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .btn-chess { background: rgba(0,180,216,0.2); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .btn-chess:hover { background: rgba(0,180,216,0.4); border-color: var(--primary); }
+        .btn-chess.primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none; }
+        .btn-chess.gold { background: rgba(255,215,0,0.2); border-color: var(--gold); }
+        .btn-chess.gold:hover { background: rgba(255,215,0,0.4); }
+        .move-history { max-height: 120px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; margin-top: 10px; }
+        
+        .whatsapp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .whatsapp-card { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 16px; text-align: center; border: 1px solid var(--glass-border); transition: 0.2s; }
+        .whatsapp-card:hover { border-color: #25D366; transform: translateY(-2px); }
+        .btn-whatsapp-card { background: #25D366; border: none; padding: 10px 20px; border-radius: 30px; color: white; cursor: pointer; font-weight: 600; transition: 0.2s; width: 100%; margin-top: 8px; }
+        .btn-whatsapp-card:hover { transform: scale(1.02); filter: brightness(1.05); }
+        
+        .toggle-group { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 16px; margin-top: 10px; flex-wrap: wrap; }
+        .toggle-switch { position: relative; width: 50px; height: 28px; background: #333; border-radius: 14px; cursor: pointer; transition: 0.3s; flex-shrink: 0; }
+        .toggle-switch.active { background: var(--primary); }
+        .toggle-switch.active.gold { background: var(--gold); }
+        .toggle-switch.active.healing { background: var(--healing); }
+        .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: white; border-radius: 50%; transition: 0.3s; }
+        .toggle-switch.active::after { left: 25px; }
+        
+        /* ===== ENQUIRY FORM ===== */
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 0.7rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 16px; color: white; font-size: 14px; transition: all 0.3s; font-family: var(--font-exo); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,215,0,0.2); }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-primary); }
+        .form-group .checkbox-label input { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
+        .form-section-title { font-size: 1rem; font-weight: 700; color: var(--gold); margin: 20px 0 15px; padding-bottom: 8px; border-bottom: 1px solid var(--glass-border); }
+        
+        /* ===== FOOTER ===== */
+        .footer { text-align: center; padding: 25px 20px 20px; margin-top: 30px; border-top: 1px solid var(--glass-border); }
+        .footer .copyright { font-size: 0.6rem; color: var(--text-secondary); }
+        .footer-logos { display: flex; justify-content: center; gap: 30px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+        .footer-logos img { height: 45px; width: auto; opacity: 0.8; transition: all 0.3s; }
+        .footer-logos img:hover { opacity: 1; transform: scale(1.05); }
+        
+        .toast { position: fixed; top: 100px; right: 20px; background: rgba(15,25,45,0.95); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px 24px; z-index: 9999; animation: slideUp 0.3s ease-out; max-width: 350px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+        .toast.warning { border-color: var(--warning); }
+        
+        .trial-banner { background: rgba(255,215,0,0.15); border: 1px solid var(--gold); border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .trial-banner .days { color: var(--gold); font-weight: 700; }
+        .trial-banner .pay-btn { background: var(--gold); border: none; padding: 8px 20px; border-radius: 30px; font-weight: 700; color: #000; cursor: pointer; }
+        
+        @media (max-width: 768px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .header { flex-direction: column; text-align: center; }
+            .user-area { justify-content: center; }
+            .chess-board-wrapper { flex-direction: column; align-items: center; }
+            .login-logo { max-width: 200px; }
+            .login-title { font-size: 1.6rem; }
+            .top-menu { gap: 4px; }
+            .menu-btn { padding: 8px 12px; font-size: 10px; }
+            .sober-counter { font-size: 3rem; }
+            .form-grid-2 { grid-template-columns: 1fr; }
+            .footer-logos { gap: 15px; }
+            .footer-logos img { height: 35px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 10px; }
+            .glass-card { padding: 16px; }
+            .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .stat-card { padding: 12px; }
+            .stat-value { font-size: 1.3rem; }
+            #chessBoard { max-width: 100%; }
+            .sober-counter { font-size: 2.5rem; }
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    
+    <!-- ===== LOGIN OVERLAY ===== -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <img src="https://i.postimg.cc/436F41Ww/Chat-GPT-Image-Jun-23-2026-11-26-35-AM.png" alt="Real Ngempela Recovery Centre" class="login-logo" onerror="this.src='https://i.postimg.cc/KvmJMsTk/pelo-transparent-logo.png'">
+            <div class="login-title">Real Ngempela</div>
+            <div class="login-subtitle">Recovery Centre · Healing Lives, Restoring Families</div>
+            <div class="login-trial">✨ 7-Day Free Trial · Then R1000 Admin Fee</div>
+            
+            <button id="googleLoginBtn" class="btn-primary-custom btn-google" onclick="loginWithGoogle()">
+                <i class="fab fa-google" style="font-size:1.3rem;"></i> Sign in with Google
+            </button>
+            
+            <div class="auth-separator">or</div>
+            
+            <button id="demoLoginBtn" class="btn-primary-custom btn-demo" onclick="enterDemo()">
+                <i class="fas fa-rocket"></i> Start 7-Day Trial
+            </button>
+            
+            <button id="whatsappLoginBtn" class="btn-primary-custom btn-whatsapp" onclick="openWhatsAppDirect()">
+                <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i> Chat on WhatsApp
+            </button>
+            
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
+    
+    <!-- ===== MAIN APP ===== -->
+    <div id="appContainer" class="container" style="display: none;">
+        
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo-area">
+                <img src="https://i.postimg.cc/436F41Ww/Chat-GPT-Image-Jun-23-2026-11-26-35-AM.png" alt="Real Ngempela" class="header-logo" onerror="this.src='https://i.postimg.cc/KvmJMsTk/pelo-transparent-logo.png'">
+                <div class="brand-text">
+                    <h1>Real Ngempela</h1>
+                    <p>Recovery Centre</p>
+                </div>
+            </div>
+            <div class="user-area" id="userArea">
+                <div class="user-avatar" id="userAvatar"><i class="fas fa-user"></i></div>
+                <span class="user-email" id="userEmailDisplay">Trial User</span>
+                <span id="trialDaysBadge" style="font-size:0.6rem; background:rgba(255,215,0,0.2); padding:2px 10px; border-radius:30px; color:var(--gold);">7 days left</span>
+                <button id="logoutMainBtn" class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+        
+        <!-- TRIAL BANNER -->
+        <div class="trial-banner" id="trialBanner">
+            <span>⏳ <span class="days" id="trialDaysDisplay">7</span> days remaining in your free trial</span>
+            <button class="pay-btn" onclick="payR1000()">Pay R1000 · Full Access</button>
+        </div>
+        
+        <!-- STATS -->
+        <div class="stats-row">
+            <div class="stat-card"><div class="stat-value" id="soberDays">0</div><div class="stat-label">Days Sober</div></div>
+            <div class="stat-card"><div class="stat-value" id="quizCount">0</div><div class="stat-label">Quizzes</div></div>
+            <div class="stat-card"><div class="stat-value" id="chessGames">0</div><div class="stat-label">Chess Games</div></div>
+            <div class="stat-card"><div class="stat-value">⚛️</div><div class="stat-label">Quantum Powered</div></div>
+        </div>
+        
+        <!-- NAVIGATION -->
+        <div class="top-menu">
+            <button class="menu-btn active" data-section="dashboard" onclick="switchSection('dashboard')">🏠 Dashboard</button>
+            <button class="menu-btn healing" data-section="sobriety" onclick="switchSection('sobriety')">💚 Sobriety</button>
+            <button class="menu-btn gold" data-section="prayer" onclick="switchSection('prayer')">🙏 Prayer</button>
+            <button class="menu-btn" data-section="chat" onclick="switchSection('chat')">💬 Chat</button>
+            <button class="menu-btn" data-section="quiz" onclick="switchSection('quiz')">📝 Quiz</button>
+            <button class="menu-btn" data-section="chess" onclick="switchSection('chess')">♟️ Chess</button>
+            <button class="menu-btn" data-section="whatsapp" onclick="switchSection('whatsapp')">💬 WhatsApp</button>
+            <button class="menu-btn quantum" data-section="quantum" onclick="switchSection('quantum')">⚛️ Quantum</button>
+            <button class="menu-btn gold" data-section="enquiry" onclick="switchSection('enquiry')">📝 Enquiry</button>
+            <button class="menu-btn" data-section="settings" onclick="switchSection('settings')">⚙️ Settings</button>
+        </div>
+        
+        <!-- ===== SECTION: DASHBOARD ===== -->
+        <div id="section-dashboard" class="section active">
+            <div class="glass-card gold-glow">
+                <div class="card-header gold"><i class="fas fa-home"></i><h3>Dashboard</h3></div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:15px;">
+                    <div class="stat-card" style="border-color:var(--gold);"><div class="stat-value" id="dashSoberDays" style="background:linear-gradient(135deg,var(--gold),var(--healing));-webkit-background-clip:text;background-clip:text;color:transparent;">0</div><div class="stat-label">Days Sober</div></div>
+                    <div class="stat-card" style="border-color:var(--healing);"><div class="stat-value" style="background:linear-gradient(135deg,var(--healing),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;">💪</div><div class="stat-label">Milestone</div></div>
+                    <div class="stat-card" style="border-color:var(--quantum);"><div class="stat-value" style="background:linear-gradient(135deg,var(--quantum),var(--primary));-webkit-background-clip:text;background-clip:text;color:transparent;">98.4%</div><div class="stat-label">Quantum Correlation</div></div>
+                    <div class="stat-card" style="border-color:var(--success);"><div class="stat-value" style="background:linear-gradient(135deg,var(--success),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">15h</div><div class="stat-label">Healing Time</div></div>
+                </div>
+                <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="chat-send healing" onclick="switchSection('sobriety')"><i class="fas fa-heart"></i> Track Sobriety</button>
+                    <button class="chat-send gold" onclick="switchSection('prayer')"><i class="fas fa-pray"></i> Prayer Room</button>
+                    <button class="chat-send" style="background:#25D366;" onclick="openWhatsAppDirect()"><i class="fab fa-whatsapp"></i> WhatsApp Support</button>
+                    <button class="chat-send gold" style="background:linear-gradient(135deg,var(--gold),var(--healing));color:#000;" onclick="switchSection('enquiry')"><i class="fas fa-pen"></i> Enquiry & Admission</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: SOBRIETY ===== -->
+        <div id="section-sobriety" class="section">
+            <div class="glass-card healing-glow">
+                <div class="card-header healing"><i class="fas fa-heart"></i><h3>Sobriety Tracker</h3></div>
+                <div class="sober-counter" id="soberCounter">0</div>
+                <div class="sober-label">Days Sober</div>
+                
+                <div class="milestone-bar">
+                    <div class="milestone-fill" id="milestoneFill" style="width:0%"></div>
+                </div>
+                <div class="milestone-text">
+                    <span>0</span>
+                    <span id="nextMilestoneLabel">Next: 7 Days</span>
+                    <span id="targetMilestone">365</span>
+                </div>
+                
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin:15px 0;">
+                    <button class="chat-send gold" onclick="addSoberDay()"><i class="fas fa-plus"></i> Add Day</button>
+                    <button class="chat-send" style="background:var(--danger);" onclick="resetSober()"><i class="fas fa-undo"></i> Reset</button>
+                    <button class="chat-send" style="background:var(--gold);color:#000;" onclick="shareSober()"><i class="fab fa-whatsapp"></i> Share Progress</button>
+                </div>
+                
+                <div style="background:rgba(0,0,0,0.3); border-radius:12px; padding:15px; margin-top:10px;">
+                    <h4 style="color:var(--gold);">🏆 Milestones</h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                        <span style="background:rgba(255,215,0,0.1); padding:6px 12px; border-radius:30px; font-size:0.8rem;">7 Days: 🎉 First Week</span>
+                        <span style="background:rgba(255,215,0,0.1); padding:6px 12px; border-radius:30px; font-size:0.8rem;">30 Days: 💪 One Month</span>
+                        <span style="background:rgba(255,215,0,0.1); padding:6px 12px; border-radius:30px; font-size:0.8rem;">90 Days: 🌟 Three Months</span>
+                        <span style="background:rgba(255,215,0,0.1); padding:6px 12px; border-radius:30px; font-size:0.8rem;">365 Days: 👑 One Year</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: PRAYER ===== -->
+        <div id="section-prayer" class="section">
+            <div class="glass-card gold-glow">
+                <div class="card-header gold"><i class="fas fa-pray"></i><h3>Prayer Room</h3></div>
+                <div id="prayerContainer">
+                    <div class="prayer-card">
+                        <div class="quote" id="prayerQuote">"Healing is not a destination, it is a journey. Every step forward is progress."</div>
+                        <div class="author" id="prayerAuthor">— Rumi</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:15px;">
+                    <button class="chat-send gold" onclick="newPrayer()"><i class="fas fa-sync-alt"></i> New Quote</button>
+                    <button class="chat-send" style="background:var(--gold);color:#000;" onclick="sharePrayer()"><i class="fab fa-whatsapp"></i> Share</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: CHAT ===== -->
+        <div id="section-chat" class="section">
+            <div class="glass-card quantum-glow">
+                <div class="card-header quantum"><i class="fas fa-comments"></i><h3>Khensani AI Counsellor</h3></div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message ai"><strong>Khensani:</strong> Welcome to Real Ngempela Recovery Centre. I'm here to support you. How are you feeling today? 🌟</div>
+                </div>
+                <div class="chat-input-group">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Share how you're feeling...">
+                    <button id="chatSendBtn" class="chat-send" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: QUIZ ===== -->
+        <div id="section-quiz" class="section">
+            <div class="glass-card gold-glow">
+                <div class="card-header gold"><i class="fas fa-brain"></i><h3>Recovery Quiz</h3></div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <select id="quizSubject" style="background:rgba(0,0,0,0.5);border:1px solid var(--glass-border);border-radius:30px;padding:8px 16px;color:white;">
+                        <option value="recovery">Recovery</option>
+                        <option value="math">Math</option>
+                        <option value="science">Science</option>
+                        <option value="history">History</option>
+                    </select>
+                    <button id="quizGenerateBtn" class="chat-send gold" onclick="generateQuiz()"><i class="fas fa-play"></i> Generate</button>
+                    <button id="quizResetBtn" class="btn-chess" onclick="resetQuiz()"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+                <div id="quizContainer"><p style="color:var(--text-secondary);">Select Recovery and click Generate.</p></div>
+                <div style="display:flex; gap:20px; margin-top:15px; flex-wrap:wrap; font-size:0.8rem;">
+                    <span>Score: <strong id="quizScoreDisplay">0</strong></span>
+                    <span>Questions: <strong id="quizTotalDisplay">0</strong></span>
+                    <span>Correct: <strong id="quizCorrectDisplay">0</strong></span>
+                    <span>Streak: <strong id="quizStreakDisplay">0</strong></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: CHESS ===== -->
+        <div id="section-chess" class="section">
+            <div class="glass-card">
+                <div class="card-header"><i class="fas fa-chess-king" style="color:var(--gold);"></i><h3>♟️ Chess Arena</h3></div>
+                <div class="chess-board-wrapper">
+                    <div id="chessBoard"></div>
+                    <div class="chess-sidebar">
+                        <div class="stat-item"><span>⚪ White to move</span><span id="turnIndicator">Yes</span></div>
+                        <div class="stat-item"><span>Difficulty</span>
+                            <select id="chessDifficulty" style="background:rgba(0,0,0,0.5);border:1px solid var(--glass-border);border-radius:30px;padding:4px 12px;color:white;">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <div class="stat-item"><span>Score</span><span id="chessScore">0</span></div>
+                        <div class="stat-item"><span>Games Played</span><span id="chessGamesPlayed">0</span></div>
+                        <div class="stat-item"><span>Games Won</span><span id="chessGamesWon">0</span></div>
+                        <div class="chess-controls">
+                            <button id="chessUndoBtn" class="btn-chess" onclick="undoChessMove()"><i class="fas fa-undo"></i> Undo</button>
+                            <button id="chessNewBtn" class="btn-chess primary" onclick="newChessGame()"><i class="fas fa-plus"></i> New</button>
+                            <button id="chessHintBtn" class="btn-chess gold" onclick="chessHint()"><i class="fas fa-lightbulb"></i> Hint</button>
+                        </div>
+                        <div class="move-history" id="moveHistory">No moves yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: WHATSAPP ===== -->
+        <div id="section-whatsapp" class="section">
+            <div class="glass-card">
+                <div class="card-header"><i class="fab fa-whatsapp" style="color:#25D366;"></i><h3>WhatsApp Communication</h3></div>
+                
+                <button class="btn-primary-custom btn-whatsapp" style="margin-bottom:15px;" onclick="openWhatsAppDirect()">
+                    <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i> Chat with Ngempela Rep
+                </button>
+                
+                <div class="whatsapp-grid">
+                    <div class="whatsapp-card">
+                        <i class="fab fa-whatsapp" style="font-size:2rem;color:#25D366;"></i>
+                        <h4 style="margin-top:8px;">User ↔ Guardian</h4>
+                        <p style="font-size:0.7rem;color:var(--text-secondary);">Share progress, encouragement</p>
+                        <button class="btn-whatsapp-card" onclick="openWhatsAppGroup('user_guardian')">Open Group</button>
+                    </div>
+                    <div class="whatsapp-card">
+                        <i class="fab fa-whatsapp" style="font-size:2rem;color:#25D366;"></i>
+                        <h4 style="margin-top:8px;">Guardian ↔ Rep</h4>
+                        <p style="font-size:0.7rem;color:var(--text-secondary);">Progress reports, concerns</p>
+                        <button class="btn-whatsapp-card" onclick="openWhatsAppGroup('guardian_rep')">Open Group</button>
+                    </div>
+                    <div class="whatsapp-card">
+                        <i class="fab fa-whatsapp" style="font-size:2rem;color:#25D366;"></i>
+                        <h4 style="margin-top:8px;">Rep ↔ User</h4>
+                        <p style="font-size:0.7rem;color:var(--text-secondary);">Check-ins, support</p>
+                        <button class="btn-whatsapp-card" onclick="openWhatsAppGroup('rep_user')">Open Group</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top:15px; text-align:center; font-size:0.7rem; color:var(--text-secondary);">
+                    <i class="fas fa-phone"></i> Centre: 067 000 6523 · Real Ngempela Recovery Centre
+                </div>
+                
+                <div style="margin-top:10px; text-align:center; font-size:0.7rem; color:var(--text-secondary);">
+                    <i class="fab fa-whatsapp"></i> WhatsApp Group Link: <span style="color:var(--gold);">Join the Recovery Support Group</span>
+                    <button class="btn-chess gold" style="margin-left:10px;padding:4px 16px;" onclick="openWhatsAppGroupLink()">Join</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: QUANTUM ===== -->
+        <div id="section-quantum" class="section">
+            <div class="glass-card quantum-glow">
+                <div class="card-header quantum"><i class="fas fa-atom"></i><h3>⚛️ Quantum Verification</h3></div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:20px;">
+                    <div class="stat-card" style="border-color:var(--quantum);">
+                        <div class="stat-value" style="background:linear-gradient(135deg,var(--quantum),var(--secondary));-webkit-background-clip:text;background-clip:text;color:transparent;">2.76</div>
+                        <div class="stat-label">CHSH Score</div>
+                    </div>
+                    <div class="stat-card" style="border-color:var(--quantum);">
+                        <div class="stat-value" style="background:linear-gradient(135deg,var(--quantum),var(--primary));-webkit-background-clip:text;background-clip:text;color:transparent;">98.4%</div>
+                        <div class="stat-label">Correlation</div>
+                    </div>
+                    <div class="stat-card" style="border-color:var(--quantum);">
+                        <div class="stat-value" style="background:linear-gradient(135deg,var(--quantum),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;">38%</div>
+                        <div class="stat-label">Violation above classical</div>
+                    </div>
+                </div>
+                <div style="background:rgba(0,0,0,0.3); border-radius:12px; padding:15px; margin-top:10px; font-family:var(--font-mono); font-size:0.8rem; color:var(--text-secondary);">
+                    <div><strong>IBM Job ID:</strong> <span style="color:var(--secondary);">d55p3jgnsj9s73b32lj0</span></div>
+                    <div><strong>Status:</strong> <span style="color:var(--success);">✅ Verified · Operational</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: ENQUIRY & ADMISSION ===== -->
+        <div id="section-enquiry" class="section">
+            <div class="glass-card gold-glow">
+                <div class="card-header gold"><i class="fas fa-pen"></i><h3>Enquiry & Admission</h3></div>
+                <p style="color:var(--text-secondary); margin-bottom:20px;">Fill in the form below to enquire about admission to Real Ngempela Recovery Centre. A representative will contact you within 24 hours.</p>
+                
+                <form action="https://formsubmit.co/mduduziterrist1@gmail.com" method="POST" id="enquiryForm">
+                    <input type="hidden" name="_subject" value="Real Ngempela Recovery Centre - Enquiry & Admission">
+                    <input type="hidden" name="_captcha" value="true">
+                    <input type="hidden" name="_template" value="box">
+                    <input type="hidden" name="_next" value="https://ngempela.co.za/thank-you">
+                    
+                    <!-- SECTION 1: Enquiry Type -->
+                    <div class="form-section-title">1. Enquiry Type</div>
+                    <div class="form-group">
+                        <label>What type of enquiry is this? <span style="color:var(--danger);">*</span></label>
+                        <select name="enquiry_type" required>
+                            <option value="">Please select...</option>
+                            <option value="general">General Enquiry</option>
+                            <option value="admission_self">Self Admission</option>
+                            <option value="admission_guardian">Guardian-Assisted Admission</option>
+                            <option value="family_member">Family Member Enquiry</option>
+                            <option value="professional">Professional Referral</option>
+                        </select>
+                    </div>
+                    
+                    <!-- SECTION 2: Personal Information -->
+                    <div class="form-section-title">2. Personal Information</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Full Name <span style="color:var(--danger);">*</span></label>
+                            <input type="text" name="full_name" placeholder="Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ID Number / Passport</label>
+                            <input type="text" name="id_number" placeholder="ID Number / Passport">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" name="date_of_birth">
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select name="gender">
+                                <option value="">Select...</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                                <option value="prefer_not">Prefer not to say</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number <span style="color:var(--danger);">*</span></label>
+                            <input type="tel" name="phone" placeholder="Phone Number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" name="email" placeholder="Email Address">
+                        </div>
+                    </div>
+                    
+                    <!-- SECTION 3: Guardian Information (for assisted admission) -->
+                    <div class="form-section-title">3. Guardian / Next of Kin (if applicable)</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Guardian Name</label>
+                            <input type="text" name="guardian_name" placeholder="Guardian/Next of Kin Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Guardian Phone</label>
+                            <input type="tel" name="guardian_phone" placeholder="Guardian Phone Number">
+                        </div>
+                        <div class="form-group">
+                            <label>Relationship to Guardian</label>
+                            <input type="text" name="guardian_relationship" placeholder="e.g. Parent, Spouse, Sibling">
+                        </div>
+                    </div>
+                    
+                    <!-- SECTION 4: Address -->
+                    <div class="form-section-title">4. Address</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Street Address</label>
+                            <input type="text" name="street_address" placeholder="Street Address">
+                        </div>
+                        <div class="form-group">
+                            <label>Suburb / Township</label>
+                            <input type="text" name="suburb" placeholder="Suburb / Township">
+                        </div>
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="city" placeholder="City">
+                        </div>
+                        <div class="form-group">
+                            <label>Province</label>
+                            <select name="province">
+                                <option value="">Select...</option>
+                                <option value="gauteng">Gauteng</option>
+                                <option value="western_cape">Western Cape</option>
+                                <option value="eastern_cape">Eastern Cape</option>
+                                <option value="kwazulu_natal">KwaZulu-Natal</option>
+                                <option value="mpumalanga">Mpumalanga</option>
+                                <option value="limpopo">Limpopo</option>
+                                <option value="north_west">North West</option>
+                                <option value="free_state">Free State</option>
+                                <option value="northern_cape">Northern Cape</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Postal Code</label>
+                            <input type="text" name="postal_code" placeholder="Postal Code">
+                        </div>
+                    </div>
+                    
+                    <!-- SECTION 5: Substance / Issue History -->
+                    <div class="form-section-title">5. Substance & Issue History</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Primary Issue <span style="color:var(--danger);">*</span></label>
+                            <select name="primary_issue" required>
+                                <option value="">Please select...</option>
+                                <option value="alcohol">Alcohol Dependence</option>
+                                <option value="drugs">Drug Addiction</option>
+                                <option value="gambling">Gambling Addiction</option>
+                                <option value="mental_health">Mental Health</option>
+                                <option value="trauma">Trauma / PTSD</option>
+                                <option value="other">Other / Multiple</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Programme Preference <span style="color:var(--danger);">*</span></label>
+                            <select name="programme_type" required>
+                                <option value="">Please select...</option>
+                                <option value="outpatient">Outpatient Counselling</option>
+                                <option value="residential">Residential Programme</option>
+                                <option value="support_group">Support Group</option>
+                                <option value="family_support">Family Support Programme</option>
+                                <option value="not_sure">Not Sure / Need Guidance</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Substance/Issue History</label>
+                        <textarea name="substance_history" placeholder="Brief history of substance use or issue (e.g., how long, what substances, any previous attempts at recovery)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Story (Optional)</label>
+                        <textarea name="brief_history" placeholder="Tell us your story... What brought you here? What are you hoping to achieve?"></textarea>
+                    </div>
+                    
+                    <!-- SECTION 6: Contact Preferences -->
+                    <div class="form-section-title">6. Contact Preferences</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Preferred Contact Method</label>
+                            <select name="preferred_contact">
+                                <option value="phone">Phone</option>
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="email">Email</option>
+                                <option value="any">Any</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Best Time to Contact</label>
+                            <input type="text" name="best_time" placeholder="e.g. Mornings, Afternoons, Evenings">
+                        </div>
+                    </div>
+                    
+                    <!-- SECTION 7: Consent -->
+                    <div class="form-section-title">7. Consent</div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="consent" required>
+                            I consent to Real Ngempela Recovery Centre contacting me and processing my information for admission purposes in accordance with POPIA.
+                            <span style="color:var(--danger);">*</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary-custom btn-submit" style="margin-top:25px;">
+                        <i class="fas fa-paper-plane"></i> Submit Enquiry
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- ===== SECTION: SETTINGS ===== -->
+        <div id="section-settings" class="section">
+            <div class="glass-card">
+                <div class="card-header"><i class="fas fa-user-cog"></i><h3>Settings</h3></div>
+                
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-size:0.7rem; color:var(--text-secondary); margin-bottom:4px;">Display Name</label>
+                    <input type="text" id="profileName" class="settings-input" style="width:100%; padding:12px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); border-radius:30px; color:white; font-family:var(--font-exo);" placeholder="Your name">
+                </div>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-size:0.7rem; color:var(--text-secondary); margin-bottom:4px;">Phone Number (WhatsApp)</label>
+                    <input type="tel" id="profilePhone" class="settings-input" style="width:100%; padding:12px; background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); border-radius:30px; color:white; font-family:var(--font-exo);" placeholder="+27 82 555 1234">
+                </div>
+                
+                <div class="toggle-group">
+                    <span style="font-size:0.8rem;"><i class="fas fa-user-secret"></i> Incognito Mode</span>
+                    <div class="toggle-switch" id="incognitoToggle" onclick="toggleIncognito()"></div>
+                    <span style="font-size:0.6rem; color:var(--text-secondary);">Private healing session</span>
+                </div>
+                
+                <button id="saveProfileBtn" class="chat-send" style="width:100%; margin-top:15px;" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+        
+        <!-- ===== FOOTER ===== -->
+        <div class="footer">
+            <div class="footer-logos">
+                <img src="https://i.postimg.cc/436F41Ww/Chat-GPT-Image-Jun-23-2026-11-26-35-AM.png" alt="Real Ngempela Recovery Centre" class="footer-logo" onerror="this.style.display='none'">
+                <img src="https://i.postimg.cc/zXW78GNH/Mind-Tech-Transparent-Logo.png" alt="MindTech Industries" class="footer-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="copyright">© 2026 Real Ngempela Recovery Centre · Powered by MindTech Industries</div>
+            <div style="margin-top:8px; font-size:0.6rem; color:var(--text-secondary);">
+                <i class="fas fa-phone"></i> 067 000 6523 · <i class="fas fa-envelope"></i> mduduziterrist1@gmail.com
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // REAL NGEMPELA RECOVERY CENTRE — v2.0 WITH ENQUIRY FORM
+        // ============================================================
+        
+        // ===== FIREBASE =====
+        var firebaseConfig = {
+            apiKey: "AIzaSyD5OB59lG6bAsmQ7A97zXP_MfQ5AM3BYaw",
+            authDomain: "mindflow-ai-education.firebaseapp.com",
+            projectId: "mindflow-ai-education",
+            storageBucket: "mindflow-ai-education.firebasestorage.app",
+            messagingSenderId: "157615197603",
+            appId: "1:157615197603:web:540d67781fc55d04c11e16"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var auth = firebase.auth();
+        var provider = new firebase.auth.GoogleAuthProvider();
+        var db = firebase.firestore();
+        
+        // ===== DOM REFS =====
+        var loginOverlay = document.getElementById('loginOverlay');
+        var appContainer = document.getElementById('appContainer');
+        var userEmailDisplay = document.getElementById('userEmailDisplay');
+        var loginError = document.getElementById('loginError');
+        var chatMessages = document.getElementById('chatMessages');
+        var chatInput = document.getElementById('chatInput');
+        var trialDaysBadge = document.getElementById('trialDaysBadge');
+        var trialDaysDisplay = document.getElementById('trialDaysDisplay');
+        var soberCounter = document.getElementById('soberCounter');
+        var dashSoberDays = document.getElementById('dashSoberDays');
+        var milestoneFill = document.getElementById('milestoneFill');
+        var nextMilestoneLabel = document.getElementById('nextMilestoneLabel');
+        
+        // ===== STATE =====
+        var isDemo = true;
+        var currentUser = null;
+        var idToken = null;
+        var soberDays = 0;
+        var totalQuizzesTaken = 0;
+        var trialDaysRemaining = 7;
+        var isPaid = false;
+        var incognitoActive = false;
+        
+        // ===== WHATSAPP =====
+        var WHATSAPP_NUMBER = "27670006523";
+        var WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/RealNgempelaRecovery";
+        
+        // ============================================================
+        // WHATSAPP FUNCTIONS
+        // ============================================================
+        function openWhatsAppDirect() {
+            var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
+            var clean = phone.replace(/\D/g, '');
+            var msg = encodeURIComponent("Hello, I need help with recovery. Please assist me. Real Ngempela Recovery Centre.");
+            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+            showToast('💬 Opening WhatsApp...', 'success');
+        }
+        
+        function openWhatsAppGroup(type) {
+            var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
+            var clean = phone.replace(/\D/g, '');
+            var msg = encodeURIComponent("Hello from Real Ngempela Recovery Centre. I'm using the " + type.replace('_', ' ') + " group.");
+            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+            showToast('💬 Opening WhatsApp group...', 'info');
+        }
+        
+        function openWhatsAppGroupLink() {
+            window.open(WHATSAPP_GROUP_LINK, '_blank');
+            showToast('💬 Joining Recovery Support Group...', 'success');
+        }
+        
+        // ============================================================
+        // SOBRIETY TRACKER
+        // ============================================================
+        function loadSoberData() {
+            try {
+                var saved = localStorage.getItem('ngempela_sober_days');
+                if (saved) { soberDays = parseInt(saved); }
+                updateSoberDisplay();
+            } catch(e) { console.log('Sober load error'); }
+        }
+        
+        function updateSoberDisplay() {
+            soberCounter.textContent = soberDays;
+            dashSoberDays.textContent = soberDays;
+            document.getElementById('soberDays').textContent = soberDays;
+            
+            var milestones = [7, 30, 90, 180, 365];
+            var nextMilestone = milestones.find(function(m) { return m > soberDays; }) || 365;
+            var prevMilestone = milestones.filter(function(m) { return m <= soberDays; }).pop() || 0;
+            var progress = nextMilestone ? ((soberDays - prevMilestone) / (nextMilestone - prevMilestone)) * 100 : 100;
+            milestoneFill.style.width = Math.min(progress, 100) + '%';
+            nextMilestoneLabel.textContent = 'Next: ' + nextMilestone + ' Days';
+            document.getElementById('targetMilestone').textContent = nextMilestone;
+            
+            if (soberDays === 7) { showToast('🎉 7 Days Sober! First week milestone!', 'success'); }
+            if (soberDays === 30) { showToast('🎉 30 Days Sober! One month!', 'success'); }
+            if (soberDays === 90) { showToast('🎉 90 Days Sober! Three months!', 'success'); }
+            if (soberDays === 365) { showToast('👑 365 Days Sober! One year!', 'success'); }
+        }
+        
+        function addSoberDay() {
+            soberDays++;
+            localStorage.setItem('ngempela_sober_days', soberDays);
+            updateSoberDisplay();
+            showToast('✅ Day ' + soberDays + ' added! Keep going!', 'success');
+        }
+        
+        function resetSober() {
+            if (confirm('Are you sure you want to reset your sobriety counter? This cannot be undone.')) {
+                soberDays = 0;
+                localStorage.setItem('ngempela_sober_days', soberDays);
+                updateSoberDisplay();
+                showToast('🔄 Sobriety counter reset. New beginning.', 'warning');
+            }
+        }
+        
+        function shareSober() {
+            var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
+            var clean = phone.replace(/\D/g, '');
+            var msg = encodeURIComponent("💚 I am " + soberDays + " days sober! Real Ngempela Recovery Centre - Healing Lives, Restoring Families. #Recovery #Healing");
+            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+        }
+        
+        // ============================================================
+        // PRAYER ROOM
+        // ============================================================
+        var prayerQuotes = [
+            { quote: "Healing is not a destination, it is a journey. Every step forward is progress.", author: "Rumi" },
+            { quote: "The wound is the place where the light enters you.", author: "Rumi" },
+            { quote: "You are not your past. You are the courage that keeps you moving forward.", author: "Unknown" },
+            { quote: "Recovery is not about being perfect. It's about being willing to try again.", author: "Unknown" },
+            { quote: "The greatest healing is the one that happens from within.", author: "African Proverb" },
+            { quote: "When you save one child, you save yourself, your family, and the community.", author: "Prophet Conforter Mdu" },
+            { quote: "God is alive. He heals the brokenhearted and binds up their wounds.", author: "Psalm 147:3" },
+            { quote: "From the ashes of yesterday, a new dawn rises. The chains that once held you now fall away.", author: "Unknown" },
+            { quote: "You are what you choose to become. Choose healing. Choose life.", author: "Unknown" },
+            { quote: "The journey of a thousand miles begins with a single step. Take that step today.", author: "Lao Tzu" }
+        ];
+        var currentPrayerIndex = 0;
+        
+        function newPrayer() {
+            var randomIndex = Math.floor(Math.random() * prayerQuotes.length);
+            currentPrayerIndex = randomIndex;
+            var prayer = prayerQuotes[randomIndex];
+            document.getElementById('prayerQuote').textContent = '"' + prayer.quote + '"';
+            document.getElementById('prayerAuthor').textContent = '— ' + prayer.author;
+        }
+        
+        function sharePrayer() {
+            var prayer = prayerQuotes[currentPrayerIndex];
+            var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
+            var clean = phone.replace(/\D/g, '');
+            var msg = encodeURIComponent('🙏 " ' + prayer.quote + ' " — ' + prayer.author + '\n\nReal Ngempela Recovery Centre - Healing Lives, Restoring Families');
+            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+        }
+        
+        // ============================================================
+        // TRIAL SYSTEM
+        // ============================================================
+        function loadTrialData() {
+            try {
+                var startDate = localStorage.getItem('ngempela_trial_start');
+                var paid = localStorage.getItem('ngempela_paid');
+                if (paid === 'true') {
+                    isPaid = true;
+                    trialDaysRemaining = 999;
+                    document.getElementById('trialBanner').style.display = 'none';
+                    trialDaysBadge.textContent = '✅ Full Access';
+                    return;
+                }
+                if (startDate) {
+                    var start = new Date(startDate);
+                    var now = new Date();
+                    var diff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+                    trialDaysRemaining = Math.max(0, 7 - diff);
+                } else {
+                    localStorage.setItem('ngempela_trial_start', new Date().toISOString());
+                    trialDaysRemaining = 7;
+                }
+                updateTrialDisplay();
+            } catch(e) { console.log('Trial load error'); }
+        }
+        
+        function updateTrialDisplay() {
+            trialDaysDisplay.textContent = trialDaysRemaining;
+            trialDaysBadge.textContent = trialDaysRemaining + ' days left';
+            if (trialDaysRemaining <= 0 && !isPaid) {
+                document.getElementById('trialBanner').style.display = 'block';
+                trialDaysBadge.textContent = '⏳ Trial Expired';
+                showToast('⏳ Your 7-day trial has expired. Please pay R1000 for full access.', 'warning');
+            } else if (trialDaysRemaining <= 3 && !isPaid) {
+                document.getElementById('trialBanner').style.display = 'flex';
+                trialDaysBadge.textContent = trialDaysRemaining + ' days left';
+            } else {
+                document.getElementById('trialBanner').style.display = 'none';
+            }
+        }
+        
+        function payR1000() {
+            var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
+            var clean = phone.replace(/\D/g, '');
+            var msg = encodeURIComponent("I want to pay R1000 for full access to Real Ngempela Recovery Centre app. Please provide payment details.");
+            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+            showToast('💰 Payment request sent via WhatsApp. Admin will process.', 'success');
+        }
+        
+        // ============================================================
+        // SWITCH SECTION
+        // ============================================================
+        function switchSection(sectionId) {
+            console.log('🔀 Switching to:', sectionId);
+            document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+            var target = document.getElementById('section-' + sectionId);
+            if (target) { target.classList.add('active'); }
+            document.querySelectorAll('.menu-btn').forEach(function(b) {
+                b.classList.remove('active');
+                if (b.dataset.section === sectionId) b.classList.add('active');
+            });
+            if (sectionId === 'chess') setTimeout(renderChessBoard, 100);
+        }
+        
+        // ============================================================
+        // LOGIN
+        // ============================================================
+        function enterDemo() {
+            console.log('🚀 TRIAL LOGIN');
+            isDemo = true;
+            currentUser = { uid: 'demo', email: 'trial@ngempela.co.za' };
+            userEmailDisplay.textContent = 'Trial User';
+            loginOverlay.classList.add('hidden');
+            appContainer.style.display = 'block';
+            loginError.textContent = '';
+            loadTrialData();
+            loadSoberData();
+            initApp();
+        }
+        
+        function loginWithGoogle() {
+            console.log('🔑 GOOGLE LOGIN');
+            loginError.textContent = '⏳ Signing in...';
+            auth.signInWithPopup(provider)
+                .then(function(result) {
+                    var user = result.user;
+                    console.log('✅ Google success:', user.email);
+                    currentUser = user;
+                    isDemo = false;
+                    userEmailDisplay.textContent = user.email || 'User';
+                    loginOverlay.classList.add('hidden');
+                    appContainer.style.display = 'block';
+                    loginError.textContent = '';
+                    idToken = user.getIdToken();
+                    loadProfile(user.uid);
+                    loadTrialData();
+                    loadSoberData();
+                    initApp();
+                })
+                .catch(function(error) {
+                    console.error('❌ Google error:', error);
+                    loginError.textContent = '❌ ' + error.message;
+                });
+        }
+        
+        function logout() {
+            if (!isDemo) auth.signOut();
+            isDemo = false;
+            currentUser = null;
+            idToken = null;
+            loginOverlay.classList.remove('hidden');
+            appContainer.style.display = 'none';
+        }
+        
+        auth.onAuthStateChanged(function(user) {
+            if (user && !isDemo) {
+                currentUser = user;
+                isDemo = false;
+                userEmailDisplay.textContent = user.email || 'User';
+                loginOverlay.classList.add('hidden');
+                appContainer.style.display = 'block';
+                loginError.textContent = '';
+                idToken = user.getIdToken();
+                loadProfile(user.uid);
+                loadTrialData();
+                loadSoberData();
+                initApp();
+            }
+        });
+        
+        // ============================================================
+        // PROFILE
+        // ============================================================
+        function loadProfile(uid) {
+            try {
+                db.collection('users').doc(uid).get()
+                    .then(function(doc) {
+                        if (doc.exists) {
+                            var data = doc.data();
+                            document.getElementById('profileName').value = data.name || '';
+                            document.getElementById('profilePhone').value = data.phone || '';
+                            if (data.soberDays) { soberDays = data.soberDays; updateSoberDisplay(); }
+                            if (data.paid) { isPaid = true; trialDaysRemaining = 999; updateTrialDisplay(); }
+                        }
+                    })
+                    .catch(function(e) { console.log('Profile load error:', e); });
+            } catch(e) { console.log('Profile error:', e); }
+        }
+        
+        function saveSettings() {
+            var uid = isDemo ? 'demo' : (currentUser ? currentUser.uid : 'demo');
+            var name = document.getElementById('profileName').value;
+            var phone = document.getElementById('profilePhone').value;
+            var data = { name: name, phone: phone, soberDays: soberDays, updatedAt: new Date() };
+            db.collection('users').doc(uid).set(data, { merge: true })
+                .then(function() { showToast('✅ Settings saved!', 'success'); })
+                .catch(function(e) { showToast('❌ Error: ' + e.message, 'error'); });
+        }
+        
+        // ============================================================
+        // TOAST
+        // ============================================================
+        function showToast(msg, type) {
+            var existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            var div = document.createElement('div');
+            div.className = 'toast ' + (type || '');
+            var icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '💡';
+            div.innerHTML = '<div style="display:flex;align-items:center;"><span style="font-size:1.4rem;margin-right:12px;">' + icon + '</span><span>' + msg + '</span></div>';
+            document.body.appendChild(div);
+            setTimeout(function() { if (div.parentNode) div.remove(); }, 4000);
+        }
+        
+        // ============================================================
+        // CHAT — WITH FALLBACK
+        // ============================================================
+        function sendChatMessage() {
+            var message = chatInput.value.trim();
+            if (!message) return;
+            chatInput.value = '';
+            
+            var userDiv = document.createElement('div');
+            userDiv.className = 'chat-message user';
+            userDiv.textContent = message;
+            chatMessages.appendChild(userDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            var typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-message ai';
+            typingDiv.textContent = 'Khensani is thinking...';
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulated response (since backend may be down)
+            setTimeout(function() {
+                typingDiv.remove();
+                var responses = [
+                    "I hear you. You are not alone in this journey. 💚",
+                    "Thank you for sharing. Every step you take is progress.",
+                    "You are stronger than you know. Keep going.",
+                    "Real Ngempela is here for you. You matter.",
+                    "Healing takes time. Be patient with yourself.",
+                    "Your story is not over. A new chapter begins today."
+                ];
+                var aiDiv = document.createElement('div');
+                aiDiv.className = 'chat-message ai';
+                aiDiv.innerHTML = '<strong>Khensani:</strong> ' + responses[Math.floor(Math.random() * responses.length)];
+                chatMessages.appendChild(aiDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1500);
+        }
+        
+        document.getElementById('chatSendBtn').onclick = sendChatMessage;
+        chatInput.onkeypress = function(e) { if (e.key === 'Enter') sendChatMessage(); };
+        
+        // ============================================================
+        // CHESS
+        // ============================================================
+        var chess = null;
+        var isAIThinking = false;
+        var gameHistory = [];
+        var chessScore = 0;
+        var chessGamesPlayed = 0;
+        var chessGamesWon = 0;
+        var selectedSquare = null;
+        var validMoves = [];
+        
+        function initChess() {
+            try {
+                if (typeof Chess !== 'undefined') { chess = new Chess(); } 
+                else { chess = createFallbackChess(); }
+                renderChessBoard();
+            } catch(e) { console.warn('Chess init error:', e); chess = createFallbackChess(); renderChessBoard(); }
+        }
+        
+        function createFallbackChess() {
+            return {
+                fen: function() { return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'; },
+                moves: function() { return []; },
+                move: function() { return null; },
+                turn: function() { return 'w'; },
+                game_over: function() { return false; },
+                in_checkmate: function() { return false; },
+                in_draw: function() { return false; },
+                history: function() { return []; },
+                get: function() { return null; },
+                undo: function() { return null; }
+            };
+        }
+        
+        function renderChessBoard() {
+            try {
+                var boardElement = document.getElementById('chessBoard');
+                if (!chess) {
+                    boardElement.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">♟️ Chess engine loading...</div>';
+                    return;
+                }
+                var fen = chess.fen();
+                boardElement.innerHTML = fenToBoardHtml(fen);
+                updateChessStatus();
+            } catch(e) { console.warn('Chess render error:', e); }
+        }
+        
+        function fenToBoardHtml(fen) {
+            var parts = fen.split(' ');
+            var board = parts[0];
+            var rows = board.split('/');
+            var html = '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;aspect-ratio:1/1;background:#1a1a2e;padding:8px;border-radius:12px;">';
+            var pieceMap = { 'r':'♜','n':'♞','b':'♝','q':'♛','k':'♚','p':'♟','R':'♖','N':'♘','B':'♗','Q':'♕','K':'♔','P':'♙' };
+            for (var r = 0; r < 8; r++) {
+                for (var c = 0; c < 8; c++) {
+                    var isDark = (r + c) % 2 === 1;
+                    var squareName = String.fromCharCode(97 + c) + (8 - r);
+                    var piece = null;
+                    var rowData = rows[r] || '';
+                    var colPos = 0;
+                    for (var i = 0; i < rowData.length && colPos <= c; i++) {
+                        var ch = rowData[i];
+                        if (ch >= '1' && ch <= '8') { colPos += parseInt(ch); } 
+                        else { if (colPos === c) { piece = ch; } colPos++; }
+                    }
+                    var pieceChar = piece ? pieceMap[piece] : '';
+                    var color = piece && piece === piece.toUpperCase() ? '#fff' : '#aaa';
+                    var bg = isDark ? '#2c2c3e' : '#3a3a5c';
+                    var isSelected = (selectedSquare === squareName);
+                    var isMove = validMoves.some(function(m) { return m.to === squareName; });
+                    var isCapture = isMove && chess && chess.get(squareName);
+                    html += '<div class="chess-square ' + (isDark ? 'dark-square' : 'light-square') + 
+                        (isSelected ? ' selected-square' : '') + 
+                        (isMove && !isCapture ? ' valid-move' : '') + 
+                        (isMove && isCapture ? ' capture-move' : '') + 
+                        '" data-pos="' + squareName + '" style="background:' + bg + ';color:' + color + ';text-shadow:0 0 10px rgba(0,180,216,0.3);" onclick="handleChessClick(this)">' + pieceChar + '</div>';
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+        
+        function updateChessStatus() {
+            try {
+                if (!chess) return;
+                var turn = chess.turn() === 'w' ? 'White' : 'Black';
+                document.getElementById('turnIndicator').textContent = turn + ' to move';
+                document.getElementById('chessScore').textContent = chessScore;
+                document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
+                document.getElementById('chessGamesWon').textContent = chessGamesWon;
+                var history = chess.history({ verbose: true });
+                document.getElementById('moveHistory').textContent = history.map(function(m) { return m.san; }).join(' ') || 'No moves yet';
+            } catch(e) { console.warn('Update chess status error:', e); }
+        }
+        
+        function handleChessClick(squareEl) {
+            try {
+                if (!chess || isAIThinking || chess.game_over()) return;
+                var pos = squareEl.dataset.pos;
+                if (!pos) return;
+                if (selectedSquare) {
+                    var move = chess.move({ from: selectedSquare, to: pos, promotion: 'q' });
+                    if (move) {
+                        selectedSquare = null; validMoves = [];
+                        renderChessBoard();
+                        if (!chess.game_over()) { setTimeout(function() { makeAIMove(); }, 500); } 
+                        else {
+                            if (chess.in_checkmate()) { chessScore += 10; chessGamesWon++; showToast('🎉 Checkmate! You win!', 'success'); } 
+                            else { showToast('🤝 Game drawn.', 'warning'); }
+                        }
+                    } else {
+                        var piece = chess.get(pos);
+                        if (piece && piece.color === 'w') { selectSquare(pos); } 
+                        else { selectedSquare = null; validMoves = []; renderChessBoard(); }
+                    }
+                } else { selectSquare(pos); }
+            } catch(e) { console.warn('Chess click error:', e); }
+        }
+        
+        function selectSquare(square) {
+            try {
+                var piece = chess.get(square);
+                if (piece && piece.color === 'w') {
+                    selectedSquare = square;
+                    validMoves = chess.moves({ square: square, verbose: true });
+                    renderChessBoard();
+                }
+            } catch(e) { console.warn('Select square error:', e); }
+        }
+        
+        function makeAIMove() {
+            try {
+                if (!chess || chess.game_over()) return;
+                var moves = chess.moves();
+                if (moves.length === 0) return;
+                var move = moves[Math.floor(Math.random() * moves.length)];
+                chess.move(move);
+                renderChessBoard();
+                if (chess.game_over()) {
+                    if (chess.in_checkmate()) { showToast('♟️ Checkmate! AI wins.', 'error'); } 
+                    else { showToast('🤝 Game drawn.', 'warning'); }
+                }
+            } catch(e) { console.warn('AI move error:', e); }
+        }
+        
+        function newChessGame() {
+            try {
+                if (typeof Chess !== 'undefined') { chess = new Chess(); } 
+                else { chess = createFallbackChess(); }
+                gameHistory = []; selectedSquare = null; validMoves = [];
+                chessGamesPlayed++;
+                renderChessBoard();
+                document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
+                document.getElementById('chessGames').textContent = chessGamesPlayed;
+                showToast('♟️ New chess game started!', 'success');
+            } catch(e) { console.warn('New chess game error:', e); }
+        }
+        
+        function undoChessMove() {
+            try {
+                if (!chess) return;
+                if (gameHistory.length === 0) return;
+                chess.undo(); gameHistory.pop();
+                if (chess.turn() === 'b') { chess.undo(); gameHistory.pop(); }
+                selectedSquare = null; validMoves = [];
+                renderChessBoard();
+            } catch(e) { console.warn('Undo error:', e); }
+        }
+        
+        function chessHint() {
+            try {
+                if (!chess) return;
+                var moves = chess.moves({ verbose: true });
+                if (moves.length > 0) { showToast('💡 Hint: Try moving ' + moves[0].from + ' to ' + moves[0].to, 'info'); }
+            } catch(e) { console.warn('Hint error:', e); }
+        }
+        
+        // ============================================================
+        // QUIZ — INFINITE
+        // ============================================================
+        var questionBank = {
+            recovery: [
+                { q: 'What is the first step in recovery?', options: ['Admitting you need help', 'Finding a job', 'Moving to a new city', 'Forgetting the past'], answer: 0 },
+                { q: 'How long does the Real Ngempela Recovery programme take?', options: ['3-6 months', '1 month', '1 year', '2 weeks'], answer: 0 },
+                { q: 'What is the intake fee for Real Ngempela?', options: ['R1000', 'R500', 'R2000', 'Free'], answer: 0 },
+                { q: 'Who can contact Real Ngempela for help?', options: ['Anyone in Gauteng and beyond', 'Only people in Soweto', 'Only people with money', 'Only families'], answer: 0 },
+                { q: 'What does Real Ngempela provide?', options: ['Shelter, food, treatment, skills', 'Only food', 'Only shelter', 'Only medicine'], answer: 0 }
+            ],
+            math: [
+                { q: 'Solve: 2x + 5 = 13', options: ['x = 4', 'x = 5', 'x = 6', 'x = 3'], answer: 0 },
+                { q: 'What is the area of a circle with radius 5?', options: ['25π', '10π', '5π', '50π'], answer: 0 }
+            ],
+            science: [
+                { q: 'What is the chemical symbol for water?', options: ['H2O', 'CO2', 'NaCl', 'HCl'], answer: 0 }
+            ],
+            history: [
+                { q: 'When did South Africa become a democracy?', options: ['1990', '1994', '1996', '1999'], answer: 1 }
+            ]
+        };
+        
+        var quizQuestions = [];
+        var currentQuestionIndex = 0;
+        var quizScore = 0;
+        var quizCorrect = 0;
+        var quizStreak = 0;
+        var quizTotal = 0;
+        var isQuizComplete = false;
+        
+        function generateQuiz() {
+            var subject = document.getElementById('quizSubject').value;
+            var bank = questionBank[subject] || questionBank.recovery;
+            var shuffled = bank.slice();
+            for (var i = shuffled.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = shuffled[i];
+                shuffled[i] = shuffled[j];
+                shuffled[j] = temp;
+            }
+            quizQuestions = shuffled.map(function(q) { return { q: q.q, options: q.options.slice(), answer: q.answer }; });
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            quizCorrect = 0;
+            quizTotal = quizQuestions.length;
+            quizStreak = 0;
+            totalQuizzesTaken++;
+            isQuizComplete = false;
+            renderQuizQuestion();
+            updateQuizStats();
+            document.getElementById('quizCount').textContent = totalQuizzesTaken;
+            showToast('📝 Quiz generated! ' + quizTotal + ' questions.', 'success');
+        }
+        
+        function resetQuiz() {
+            quizQuestions = [];
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            quizCorrect = 0;
+            quizTotal = 0;
+            quizStreak = 0;
+            isQuizComplete = false;
+            document.getElementById('quizContainer').innerHTML = '<p style="color:var(--text-secondary);">Select a subject and click Generate.</p>';
+            updateQuizStats();
+        }
+        
+        function renderQuizQuestion() {
+            if (currentQuestionIndex >= quizQuestions.length && !isQuizComplete) {
+                isQuizComplete = true;
+                document.getElementById('quizContainer').innerHTML = 
+                    '<div style="text-align:center;padding:20px;">' +
+                    '<h3>🎉 Quiz Complete!</h3>' +
+                    '<p style="font-size:1.5rem;font-weight:bold;color:var(--gold);">' + quizScore + '/' + quizQuestions.length + '</p>' +
+                    '<p style="color:var(--text-secondary);">' + Math.round(quizScore/quizQuestions.length*100) + '%</p>' +
+                    '<button onclick="generateQuiz()" class="chat-send gold" style="margin-top:15px;">🔄 New Quiz</button>' +
+                    '</div>';
+                return;
+            }
+            var q = quizQuestions[currentQuestionIndex];
+            var html = '<div style="margin-bottom:15px;"><span style="color:var(--text-secondary);">Question ' + (currentQuestionIndex+1) + ' of ' + quizQuestions.length + '</span><p style="font-size:1.1rem;margin-top:8px;font-weight:500;">' + q.q + '</p></div>';
+            q.options.forEach(function(option, idx) {
+                html += '<button class="quiz-option" data-index="' + idx + '" onclick="selectQuizOption(this, ' + idx + ')">' + String.fromCharCode(65+idx) + '. ' + option + '</button>';
+            });
+            document.getElementById('quizContainer').innerHTML = html;
+        }
+        
+        function selectQuizOption(el, idx) {
+            if (isQuizComplete) return;
+            var q = quizQuestions[currentQuestionIndex];
+            var correct = q.answer;
+            var allOptions = document.querySelectorAll('.quiz-option');
+            allOptions.forEach(function(btn) { btn.disabled = true; });
+            if (idx === correct) { el.classList.add('correct'); quizScore++; quizCorrect++; quizStreak++; } 
+            else { el.classList.add('wrong'); allOptions[correct].classList.add('correct'); quizStreak = 0; }
+            updateQuizStats();
+            setTimeout(function() { 
+                currentQuestionIndex++; 
+                renderQuizQuestion(); 
+            }, 1500);
+        }
+        
+        function updateQuizStats() {
+            document.getElementById('quizScoreDisplay').textContent = quizScore;
+            document.getElementById('quizTotalDisplay').textContent = quizTotal;
+            document.getElementById('quizCorrectDisplay').textContent = quizCorrect;
+            document.getElementById('quizStreakDisplay').textContent = quizStreak;
+        }
+        
+        // ============================================================
+        // INCOGNITO
+        // ============================================================
+        function toggleIncognito() {
+            incognitoActive = !incognitoActive;
+            var toggle = document.getElementById('incognitoToggle');
+            toggle.classList.toggle('active', incognitoActive);
+            toggle.style.background = incognitoActive ? 'var(--primary)' : '#333';
+            showToast(incognitoActive ? '🔒 Incognito mode ON — private healing session.' : '🔓 Incognito mode OFF.', 'info');
+        }
+        
+        // ============================================================
+        // PARTICLES
+        // ============================================================
+        try {
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 55, density: { enable: true, value_area: 1000 } },
+                    color: { value: ["#00B4D8", "#FF6B9D", "#FFD700", "#8A2BE2"] },
+                    shape: { type: "circle" },
+                    opacity: { value: 0.25, random: true },
+                    size: { value: 2.5, random: true },
+                    line_linked: { enable: true, distance: 150, color: "#00B4D8", opacity: 0.08, width: 1 },
+                    move: { enable: true, speed: 0.7, direction: "none", random: true }
+                },
+                interactivity: { events: { onhover: { enable: true, mode: "repulse" } } }
+            });
+        } catch(e) { console.warn('Particles error:', e); }
+        
+        // ============================================================
+        // INIT
+        // ============================================================
+        function initApp() {
+            console.log('🚀 Real Ngempela Recovery Centre v2.0 · Initializing...');
+            initChess();
+            newPrayer();
+            loadSoberData();
+            loadTrialData();
+            document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
+            document.getElementById('chessGames').textContent = chessGamesPlayed;
+            console.log('✅ Real Ngempela Recovery Centre v2.0 · Loaded');
+            console.log('   👤 User:', isDemo ? 'Trial' : (currentUser ? currentUser.email : 'None'));
+            console.log('   💚 Sober Days:', soberDays);
+            console.log('   ⏳ Trial Days:', trialDaysRemaining);
+            console.log('   📱 WhatsApp:', WHATSAPP_NUMBER);
+            console.log('   📧 Enquiry Email: mduduziterrist1@gmail.com');
+        }
+        
+        console.log('✅ Real Ngempela Recovery Centre v2.0 · Loading...');
+    </script>
+</body>
+</html>
