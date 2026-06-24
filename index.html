@@ -13,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <!-- FIXED: Use working chess.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0-beta.8/chess.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
@@ -155,10 +154,13 @@
         .btn-chess.gold:hover { background: rgba(255,215,0,0.4); }
         .move-history { max-height: 120px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; margin-top: 10px; }
         
-        /* Chess square styles */
-        .square { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; aspect-ratio: 1/1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
-        .square:hover { transform: scale(1.05); z-index: 10; }
-        .square.selected { background: rgba(255,215,0,0.4) !important; box-shadow: inset 0 0 30px var(--gold); }
+        .chess-square { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; cursor: pointer; transition: all 0.2s; position: relative; aspect-ratio: 1/1; }
+        .chess-square:hover { transform: scale(1.05); z-index: 10; }
+        .light-square { background: rgba(42,42,58,0.8); }
+        .dark-square { background: rgba(26,26,46,0.8); }
+        .selected-square { background: rgba(255,215,0,0.4) !important; box-shadow: inset 0 0 30px var(--gold); }
+        .valid-move::after { content: ''; position: absolute; width: 16px; height: 16px; background: radial-gradient(circle, var(--success) 0%, transparent 70%); border-radius: 50%; }
+        .capture-move::after { content: ''; position: absolute; width: 90%; height: 90%; border: 3px solid var(--danger); border-radius: 50%; }
         
         .whatsapp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .whatsapp-card { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 16px; text-align: center; border: 1px solid var(--glass-border); transition: 0.2s; }
@@ -440,6 +442,7 @@
                             <button id="chessUndoBtn" class="btn-chess" onclick="undoChessMove()"><i class="fas fa-undo"></i> Undo</button>
                             <button id="chessNewBtn" class="btn-chess primary" onclick="newChessGame()"><i class="fas fa-plus"></i> New</button>
                             <button id="chessHintBtn" class="btn-chess gold" onclick="chessHint()"><i class="fas fa-lightbulb"></i> Hint</button>
+                            <button id="chessWhatsAppBtn" class="btn-chess" style="background:#25D366;border-color:#25D366;" onclick="inviteChessWhatsApp()"><i class="fab fa-whatsapp"></i> Invite</button>
                         </div>
                         <div class="move-history" id="moveHistory">No moves yet</div>
                     </div>
@@ -709,9 +712,10 @@
 
     <script>
         // ============================================================
-        // REAL NGEMPELA — FIXED CHESS BOARD
+        // REAL NGEMPELA — FULL FIXED VERSION
         // ============================================================
         
+        // ===== FIREBASE =====
         var firebaseConfig = {
             apiKey: "AIzaSyD5OB59lG6bAsmQ7A97zXP_MfQ5AM3BYaw",
             authDomain: "mindflow-ai-education.firebaseapp.com",
@@ -753,6 +757,19 @@
         var WHATSAPP_NUMBER = "27670006523";
         var WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/RealNgempelaRecovery";
         
+        // ===== CHESS STATE =====
+        var chess = null;
+        var isAIThinking = false;
+        var gameHistory = [];
+        var chessScore = 0;
+        var chessGamesPlayed = 0;
+        var chessGamesWon = 0;
+        var selectedSquare = null;
+        var validMoves = [];
+        
+        // ============================================================
+        // WHATSAPP FUNCTIONS
+        // ============================================================
         function openWhatsAppDirect() {
             var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
             var clean = phone.replace(/\D/g, '');
@@ -772,6 +789,14 @@
         function openWhatsAppGroupLink() {
             window.open(WHATSAPP_GROUP_LINK, '_blank');
             showToast('💬 Joining Recovery Support Group...', 'success');
+        }
+        
+        function inviteChessWhatsApp() {
+            var phone = document.getElementById('profilePhone').value || '27825551234';
+            var clean = phone.replace(/\D/g, '');
+            var msg = encodeURIComponent('♟️ I challenge you to a chess game on Real Ngempela Recovery Centre! Join me and let\'s play: https://real-ngempela-recovery-center.onrender.com');
+            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
+            showToast('💬 Invite sent via WhatsApp!', 'success');
         }
         
         // ============================================================
@@ -1076,159 +1101,180 @@
         chatInput.onkeypress = function(e) { if (e.key === 'Enter') sendChatMessage(); };
         
         // ============================================================
-        // CHESS — FIXED (Direct render without stockfish dependency)
+        // CHESS — FIXED (with proper fallback)
         // ============================================================
-        var chess = new Chess();
-        var chessGamesPlayed = 0;
-        var chessScore = 0;
-        var chessGamesWon = 0;
-        var selectedSquare = null;
-        var validMoves = [];
-        var isAIThinking = false;
-        var gameHistory = [];
+        function initChess() {
+            try {
+                if (typeof Chess !== 'undefined') { 
+                    chess = new Chess(); 
+                } else { 
+                    chess = createFallbackChess(); 
+                }
+                renderChessBoard();
+            } catch(e) { 
+                console.warn('Chess init error:', e); 
+                chess = createFallbackChess(); 
+                renderChessBoard(); 
+            }
+        }
+        
+        function createFallbackChess() {
+            return {
+                fen: function() { return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'; },
+                moves: function() { return []; },
+                move: function() { return null; },
+                turn: function() { return 'w'; },
+                game_over: function() { return false; },
+                in_checkmate: function() { return false; },
+                in_draw: function() { return false; },
+                in_check: function() { return false; },
+                history: function() { return []; },
+                get: function() { return null; },
+                undo: function() { return null; }
+            };
+        }
         
         function renderChessBoard() {
-            var boardElement = document.getElementById('chessBoard');
-            if (!boardElement) return;
-            var fen = chess.fen();
-            boardElement.innerHTML = fenToBoardHtml(fen);
-            updateChessStatus();
+            try {
+                var boardElement = document.getElementById('chessBoard');
+                if (!chess) {
+                    boardElement.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">♟️ Chess engine loading...</div>';
+                    return;
+                }
+                var fen = chess.fen();
+                boardElement.innerHTML = fenToBoardHtml(fen);
+                updateChessStatus();
+            } catch(e) { console.warn('Chess render error:', e); }
         }
         
         function fenToBoardHtml(fen) {
             var parts = fen.split(' ');
             var board = parts[0];
             var rows = board.split('/');
-            var html = '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;aspect-ratio:1/1;background:#1a1a2e;padding:4px;border-radius:12px;">';
+            var html = '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;aspect-ratio:1/1;background:#1a1a2e;padding:8px;border-radius:12px;">';
             var pieceMap = { 'r':'♜','n':'♞','b':'♝','q':'♛','k':'♚','p':'♟','R':'♖','N':'♘','B':'♗','Q':'♕','K':'♔','P':'♙' };
-            var rowIdx = 0;
-            for (var r = 0; r < rows.length; r++) {
-                var row = rows[r];
-                var colIdx = 0;
-                for (var c = 0; c < row.length; c++) {
-                    var ch = row[c];
-                    if (ch >= '1' && ch <= '8') {
-                        for (var i = 0; i < parseInt(ch); i++) {
-                            var isDark = (rowIdx + colIdx) % 2 === 1;
-                            var sq = String.fromCharCode(97 + colIdx) + (8 - rowIdx);
-                            html += '<div class="square" data-pos="' + sq + '" style="background:' + (isDark ? '#2c2c3e' : '#3a3a5c') + ';"></div>';
-                            colIdx++;
-                        }
-                    } else {
-                        var isDark = (rowIdx + colIdx) % 2 === 1;
-                        var piece = pieceMap[ch] || ch;
-                        var color = ch === ch.toUpperCase() ? '#fff' : '#aaa';
-                        var sq = String.fromCharCode(97 + colIdx) + (8 - rowIdx);
-                        var isSelected = (selectedSquare === sq);
-                        html += '<div class="square ' + (isSelected ? 'selected' : '') + '" data-pos="' + sq + '" style="background:' + (isDark ? '#2c2c3e' : '#3a3a5c') + ';color:' + color + ';text-shadow:0 0 10px rgba(0,180,216,0.3);">' + piece + '</div>';
-                        colIdx++;
+            for (var r = 0; r < 8; r++) {
+                for (var c = 0; c < 8; c++) {
+                    var isDark = (r + c) % 2 === 1;
+                    var squareName = String.fromCharCode(97 + c) + (8 - r);
+                    var piece = null;
+                    var rowData = rows[r] || '';
+                    var colPos = 0;
+                    for (var i = 0; i < rowData.length && colPos <= c; i++) {
+                        var ch = rowData[i];
+                        if (ch >= '1' && ch <= '8') { colPos += parseInt(ch); } 
+                        else { if (colPos === c) { piece = ch; } colPos++; }
                     }
+                    var pieceChar = piece ? pieceMap[piece] : '';
+                    var color = piece && piece === piece.toUpperCase() ? '#fff' : '#aaa';
+                    var bg = isDark ? '#2c2c3e' : '#3a3a5c';
+                    var isSelected = (selectedSquare === squareName);
+                    var isMove = validMoves.some(function(m) { return m.to === squareName; });
+                    var isCapture = isMove && chess && chess.get(squareName);
+                    html += '<div class="chess-square ' + (isDark ? 'dark-square' : 'light-square') + 
+                        (isSelected ? ' selected-square' : '') + 
+                        (isMove && !isCapture ? ' valid-move' : '') + 
+                        (isMove && isCapture ? ' capture-move' : '') + 
+                        '" data-pos="' + squareName + '" style="background:' + bg + ';color:' + color + ';text-shadow:0 0 10px rgba(0,180,216,0.3);" onclick="handleChessClick(this)">' + pieceChar + '</div>';
                 }
-                rowIdx++;
             }
             html += '</div>';
             return html;
         }
         
         function updateChessStatus() {
-            var turn = chess.turn() === 'w' ? 'White' : 'Black';
-            document.getElementById('turnIndicator').textContent = turn + ' to move';
-            document.getElementById('chessScore').textContent = chessScore;
-            document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
-            document.getElementById('chessGamesWon').textContent = chessGamesWon;
-            var history = chess.history({ verbose: true });
-            document.getElementById('moveHistory').textContent = history.map(function(m) { return m.san; }).join(' ') || 'No moves yet';
+            try {
+                if (!chess) return;
+                var turn = chess.turn() === 'w' ? 'White' : 'Black';
+                document.getElementById('turnIndicator').textContent = turn + ' to move';
+                document.getElementById('chessScore').textContent = chessScore;
+                document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
+                document.getElementById('chessGamesWon').textContent = chessGamesWon;
+                var history = chess.history({ verbose: true });
+                document.getElementById('moveHistory').textContent = history.map(function(m) { return m.san; }).join(' ') || 'No moves yet';
+            } catch(e) { console.warn('Update chess status error:', e); }
         }
         
-        document.getElementById('chessBoard').addEventListener('click', function(e) {
-            var square = e.target.closest('.square');
-            if (!square || isAIThinking || chess.game_over()) return;
-            var pos = square.dataset.pos;
-            if (!pos) return;
-            
-            if (selectedSquare) {
-                var move = chess.move({ from: selectedSquare, to: pos, promotion: 'q' });
-                if (move) {
-                    selectedSquare = null;
-                    validMoves = [];
-                    renderChessBoard();
-                    if (!chess.game_over()) {
-                        document.getElementById('turnIndicator').textContent = 'AI thinking...';
-                        setTimeout(function() { makeAIMove(); }, 300);
-                    } else {
-                        if (chess.in_checkmate()) {
-                            chessScore += 10;
-                            chessGamesWon++;
-                            showToast('🎉 Checkmate! You win!', 'success');
-                        } else {
-                            showToast('🤝 Game drawn.', 'warning');
+        function handleChessClick(squareEl) {
+            try {
+                if (!chess || isAIThinking || chess.game_over()) return;
+                var pos = squareEl.dataset.pos;
+                if (!pos) return;
+                if (selectedSquare) {
+                    var move = chess.move({ from: selectedSquare, to: pos, promotion: 'q' });
+                    if (move) {
+                        selectedSquare = null; validMoves = [];
+                        renderChessBoard();
+                        if (!chess.game_over()) { setTimeout(function() { makeAIMove(); }, 500); } 
+                        else {
+                            if (chess.in_checkmate()) { chessScore += 10; chessGamesWon++; showToast('🎉 Checkmate! You win!', 'success'); } 
+                            else { showToast('🤝 Game drawn.', 'warning'); }
                         }
-                    }
-                } else {
-                    var piece = chess.get(pos);
-                    if (piece && piece.color === 'w') {
-                        selectedSquare = pos;
-                        validMoves = chess.moves({ square: pos, verbose: true });
-                        renderChessBoard();
                     } else {
-                        selectedSquare = null;
-                        validMoves = [];
-                        renderChessBoard();
+                        var piece = chess.get(pos);
+                        if (piece && piece.color === 'w') { selectSquare(pos); } 
+                        else { selectedSquare = null; validMoves = []; renderChessBoard(); }
                     }
-                }
-            } else {
-                var piece = chess.get(pos);
+                } else { selectSquare(pos); }
+            } catch(e) { console.warn('Chess click error:', e); }
+        }
+        
+        function selectSquare(square) {
+            try {
+                var piece = chess.get(square);
                 if (piece && piece.color === 'w') {
-                    selectedSquare = pos;
-                    validMoves = chess.moves({ square: pos, verbose: true });
+                    selectedSquare = square;
+                    validMoves = chess.moves({ square: square, verbose: true });
                     renderChessBoard();
                 }
-            }
-        });
+            } catch(e) { console.warn('Select square error:', e); }
+        }
         
         function makeAIMove() {
-            var moves = chess.moves();
-            if (moves.length === 0) { isAIThinking = false; return; }
-            var move = moves[Math.floor(Math.random() * moves.length)];
-            chess.move(move);
-            renderChessBoard();
-            if (chess.game_over()) {
-                if (chess.in_checkmate()) {
-                    showToast('♟️ Checkmate! AI wins.', 'error');
-                } else {
-                    showToast('🤝 Game drawn.', 'warning');
+            try {
+                if (!chess || chess.game_over()) return;
+                var moves = chess.moves();
+                if (moves.length === 0) return;
+                var move = moves[Math.floor(Math.random() * moves.length)];
+                chess.move(move);
+                renderChessBoard();
+                if (chess.game_over()) {
+                    if (chess.in_checkmate()) { showToast('♟️ Checkmate! AI wins.', 'error'); } 
+                    else { showToast('🤝 Game drawn.', 'warning'); }
                 }
-            }
-            isAIThinking = false;
+            } catch(e) { console.warn('AI move error:', e); }
         }
         
         function newChessGame() {
-            chess = new Chess();
-            gameHistory = [];
-            selectedSquare = null;
-            validMoves = [];
-            chessGamesPlayed++;
-            renderChessBoard();
-            document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
-            document.getElementById('chessGames').textContent = chessGamesPlayed;
-            showToast('♟️ New chess game started!', 'success');
+            try {
+                if (typeof Chess !== 'undefined') { chess = new Chess(); } 
+                else { chess = createFallbackChess(); }
+                gameHistory = []; selectedSquare = null; validMoves = [];
+                chessGamesPlayed++;
+                renderChessBoard();
+                document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
+                document.getElementById('chessGames').textContent = chessGamesPlayed;
+                showToast('♟️ New chess game started!', 'success');
+            } catch(e) { console.warn('New chess game error:', e); }
         }
         
         function undoChessMove() {
-            if (gameHistory.length === 0) return;
-            chess.undo();
-            gameHistory.pop();
-            if (chess.turn() === 'b') { chess.undo(); gameHistory.pop(); }
-            selectedSquare = null;
-            validMoves = [];
-            renderChessBoard();
+            try {
+                if (!chess) return;
+                if (gameHistory.length === 0) return;
+                chess.undo(); gameHistory.pop();
+                if (chess.turn() === 'b') { chess.undo(); gameHistory.pop(); }
+                selectedSquare = null; validMoves = [];
+                renderChessBoard();
+            } catch(e) { console.warn('Undo error:', e); }
         }
         
         function chessHint() {
-            var moves = chess.moves({ verbose: true });
-            if (moves.length > 0) {
-                showToast('💡 Hint: Try moving ' + moves[0].from + ' to ' + moves[0].to, 'info');
-            }
+            try {
+                if (!chess) return;
+                var moves = chess.moves({ verbose: true });
+                if (moves.length > 0) { showToast('💡 Hint: Try moving ' + moves[0].from + ' to ' + moves[0].to, 'info'); }
+            } catch(e) { console.warn('Hint error:', e); }
         }
         
         // ============================================================
@@ -1373,7 +1419,7 @@
         // ============================================================
         function initApp() {
             console.log('🚀 Real Ngempela Recovery Centre · Initializing...');
-            renderChessBoard();
+            initChess();
             newPrayer();
             loadSoberData();
             loadTrialData();
@@ -1385,6 +1431,7 @@
             console.log('   ⏳ Trial Days:', trialDaysRemaining);
             console.log('   📱 WhatsApp:', WHATSAPP_NUMBER);
             console.log('   📧 Enquiry Email: mduduziterrist1@gmail.com');
+            console.log('   ♟️ Chess: Loaded');
         }
         
         console.log('✅ Real Ngempela Recovery Centre · Loading...');
