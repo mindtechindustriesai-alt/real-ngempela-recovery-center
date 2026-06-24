@@ -79,7 +79,7 @@
         .btn-whatsapp:hover { box-shadow: 0 8px 25px rgba(37,211,102,0.5); }
         .btn-submit { background: linear-gradient(135deg, var(--gold), var(--healing)); box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
         .btn-submit:hover { box-shadow: 0 8px 25px rgba(255,215,0,0.5); }
-        .btn-donate { background: linear-gradient(135deg, var(--success), var(--primary)); box-shadow: 0 4px 15px rgba(0,255,136,0.3); }
+        .btn-donate { background: linear-gradient(135deg, var(--success), var(--secondary)); box-shadow: 0 4px 15px rgba(0,255,136,0.3); color: #000; }
         .btn-donate:hover { box-shadow: 0 8px 25px rgba(0,255,136,0.5); }
         
         .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--glass-border); margin-bottom: 25px; }
@@ -105,6 +105,7 @@
         .menu-btn.gold:hover, .menu-btn.gold.active { background: rgba(255,215,0,0.2); border-color: var(--gold); color: var(--gold); }
         .menu-btn.healing:hover, .menu-btn.healing.active { background: rgba(255,107,157,0.2); border-color: var(--healing); color: var(--healing); }
         .menu-btn.quantum:hover, .menu-btn.quantum.active { background: rgba(138,43,226,0.3); border-color: var(--quantum); color: var(--quantum); }
+        .menu-btn.donate-btn:hover, .menu-btn.donate-btn.active { background: rgba(0,255,136,0.2); border-color: var(--success); color: var(--success); }
         
         .section { display: none; animation: fadeIn 0.3s ease; }
         .section.active { display: block; }
@@ -116,6 +117,7 @@
         .card-header.gold i { color: var(--gold); }
         .card-header.healing i { color: var(--healing); }
         .card-header.quantum i { color: var(--quantum); }
+        .card-header.donate i { color: var(--success); }
         
         .sober-counter { font-size: 4rem; font-weight: 900; text-align: center; padding: 20px; background: linear-gradient(135deg, var(--gold), var(--healing)); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .sober-label { text-align: center; color: var(--text-secondary); font-size: 1rem; }
@@ -142,25 +144,114 @@
         .quiz-option.correct { background: var(--success); color: #000; }
         .quiz-option.wrong { background: var(--danger); }
         
+        /* ===== ENHANCED CHESS STYLES ===== */
         .chess-board-wrapper { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
-        #chessBoard { width: 100%; max-width: 450px; aspect-ratio: 1/1; }
-        .chess-square { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; cursor: pointer; transition: all 0.2s; position: relative; aspect-ratio: 1/1; border-radius: 4px; }
-        .chess-square:hover { transform: scale(1.05); z-index: 10; }
-        .light-square { background: rgba(42,42,58,0.8); }
-        .dark-square { background: rgba(26,26,46,0.8); }
-        .selected-square { background: rgba(255,215,0,0.4) !important; box-shadow: inset 0 0 30px var(--gold); }
-        .valid-move::after { content: ''; position: absolute; width: 16px; height: 16px; background: radial-gradient(circle, var(--success) 0%, transparent 70%); border-radius: 50%; }
-        .capture-move::after { content: ''; position: absolute; width: 90%; height: 90%; border: 3px solid var(--danger); border-radius: 50%; }
+        .chess-board-container { display: flex; justify-content: center; margin: 10px 0; width: 100%; max-width: 500px; }
+        #chessBoard {
+            width: 100%;
+            aspect-ratio: 1;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(255,215,0,0.3), inset 0 0 50px rgba(255,215,0,0.05);
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+        .chess-square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            font-weight: 700;
+            text-shadow: 0 0 15px currentColor;
+            user-select: none;
+        }
+        .light-square { background: linear-gradient(135deg, #2a2a3a, #1a1a2a); }
+        .dark-square { background: linear-gradient(135deg, #1a1a2e, #0f0f1a); }
+        .chess-square:hover { transform: scale(1.08); z-index: 20; box-shadow: inset 0 0 30px rgba(255,215,0,0.3); }
+        .selected-square {
+            background: linear-gradient(135deg, rgba(255,215,0,0.4), rgba(255,198,0,0.4)) !important;
+            box-shadow: inset 0 0 30px var(--gold), 0 0 30px var(--gold) !important;
+        }
+        .valid-move::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, var(--success) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 15px var(--success);
+        }
+        .capture-move::after {
+            content: '';
+            position: absolute;
+            width: 90%;
+            height: 90%;
+            border: 3px solid var(--danger);
+            border-radius: 50%;
+            animation: pulseRed 1.5s infinite;
+            box-shadow: 0 0 20px var(--danger);
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+        @keyframes pulseRed {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
         
         .chess-sidebar { flex: 1; min-width: 200px; }
         .chess-sidebar .stat-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--glass-border); font-size: 0.85rem; }
-        .chess-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-        .btn-chess { background: rgba(0,180,216,0.2); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 30px; color: white; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .chess-controls { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+        .btn-chess {
+            background: rgba(0,180,216,0.2);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.2s;
+            font-family: var(--font-exo);
+        }
         .btn-chess:hover { background: rgba(0,180,216,0.4); border-color: var(--primary); }
         .btn-chess.primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border: none; }
         .btn-chess.gold { background: rgba(255,215,0,0.2); border-color: var(--gold); }
         .btn-chess.gold:hover { background: rgba(255,215,0,0.4); }
-        .move-history { max-height: 120px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; margin-top: 10px; }
+        .move-history {
+            max-height: 120px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 12px;
+            margin-top: 10px;
+            border: 1px solid var(--glass-border);
+        }
+        .move-history div {
+            padding: 3px 6px;
+            margin: 2px 0;
+            background: rgba(255,215,0,0.08);
+            border-radius: 4px;
+        }
+        .game-status {
+            text-align: center;
+            padding: 12px;
+            background: rgba(255,215,0,0.08);
+            border-radius: 10px;
+            border: 1px solid var(--gold);
+            font-weight: 600;
+            color: var(--gold);
+            margin: 10px 0;
+        }
         
         .whatsapp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .whatsapp-card { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 16px; text-align: center; border: 1px solid var(--glass-border); transition: 0.2s; }
@@ -176,6 +267,7 @@
         .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: white; border-radius: 50%; transition: 0.3s; }
         .toggle-switch.active::after { left: 25px; }
         
+        /* ===== ENQUIRY FORM ===== */
         .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; margin-bottom: 6px; font-size: 0.7rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
@@ -185,20 +277,65 @@
         .form-group .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-primary); }
         .form-group .checkbox-label input { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
         .form-section-title { font-size: 1rem; font-weight: 700; color: var(--gold); margin: 20px 0 15px; padding-bottom: 8px; border-bottom: 1px solid var(--glass-border); }
+        .form-section-title.donate-title { color: var(--success); border-bottom-color: var(--success); }
         
+        /* ===== DONATION BANKING DETAILS ===== */
+        .bank-details {
+            background: rgba(0,255,136,0.05);
+            border: 1px solid rgba(0,255,136,0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .bank-details .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+        .bank-details .detail-row:last-child { border-bottom: none; }
+        .bank-details .label { color: var(--text-secondary); }
+        .bank-details .value { color: var(--success); font-weight: 600; font-family: var(--font-mono); }
+        
+        .donation-amount-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .donation-amount-btn {
+            background: rgba(0,255,136,0.1);
+            border: 1px solid rgba(0,255,136,0.2);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.3s;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .donation-amount-btn:hover, .donation-amount-btn.selected {
+            background: rgba(0,255,136,0.25);
+            border-color: var(--success);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(0,255,136,0.2);
+        }
+        .donation-amount-btn .amount { color: var(--success); font-size: 1.1rem; }
+        
+        /* ===== FOOTER ===== */
         .footer { text-align: center; padding: 25px 20px 20px; margin-top: 30px; border-top: 1px solid var(--glass-border); }
         .footer .copyright { font-size: 0.6rem; color: var(--text-secondary); }
         .footer-logos { display: flex; justify-content: center; gap: 30px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
         .footer-logos img { height: 45px; width: auto; opacity: 0.8; transition: all 0.3s; }
         .footer-logos img:hover { opacity: 1; transform: scale(1.05); }
         
-        .bank-details { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 15px; margin: 10px 0; border-left: 3px solid var(--gold); }
-        .bank-details strong { color: var(--gold); }
-        
         .toast { position: fixed; top: 100px; right: 20px; background: rgba(15,25,45,0.95); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px 24px; z-index: 9999; animation: slideUp 0.3s ease-out; max-width: 350px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
         .toast.success { border-color: var(--success); }
         .toast.error { border-color: var(--danger); }
         .toast.warning { border-color: var(--warning); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         .trial-banner { background: rgba(255,215,0,0.15); border: 1px solid var(--gold); border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .trial-banner .days { color: var(--gold); font-weight: 700; }
@@ -209,6 +346,7 @@
             .header { flex-direction: column; text-align: center; }
             .user-area { justify-content: center; }
             .chess-board-wrapper { flex-direction: column; align-items: center; }
+            .chess-board-container { max-width: 100%; }
             .login-logo { max-width: 200px; }
             .login-title { font-size: 1.6rem; }
             .top-menu { gap: 4px; }
@@ -217,6 +355,9 @@
             .form-grid-2 { grid-template-columns: 1fr; }
             .footer-logos { gap: 15px; }
             .footer-logos img { height: 35px; }
+            .chess-square { font-size: 1.6em; }
+            .donation-amount-grid { grid-template-columns: repeat(2, 1fr); }
+            .bank-details .detail-row { flex-direction: column; gap: 4px; }
         }
         @media (max-width: 480px) {
             .container { padding: 10px; }
@@ -224,8 +365,9 @@
             .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
             .stat-card { padding: 12px; }
             .stat-value { font-size: 1.3rem; }
-            #chessBoard { max-width: 100%; }
             .sober-counter { font-size: 2.5rem; }
+            .chess-square { font-size: 1.3em; }
+            .donation-amount-grid { grid-template-columns: 1fr 1fr; }
         }
         
         ::-webkit-scrollbar { width: 4px; }
@@ -307,7 +449,7 @@
             <button class="menu-btn" data-section="whatsapp" onclick="switchSection('whatsapp')">💬 WhatsApp</button>
             <button class="menu-btn quantum" data-section="quantum" onclick="switchSection('quantum')">⚛️ Quantum</button>
             <button class="menu-btn gold" data-section="enquiry" onclick="switchSection('enquiry')">📝 Enquiry</button>
-            <button class="menu-btn gold" data-section="donate" onclick="switchSection('donate')">🙌 Donate</button>
+            <button class="menu-btn donate-btn" data-section="donate" onclick="switchSection('donate')">💚 Donate</button>
             <button class="menu-btn" data-section="settings" onclick="switchSection('settings')">⚙️ Settings</button>
         </div>
         
@@ -326,7 +468,7 @@
                     <button class="chat-send gold" onclick="switchSection('prayer')"><i class="fas fa-pray"></i> Prayer Room</button>
                     <button class="chat-send" style="background:#25D366;" onclick="openWhatsAppDirect()"><i class="fab fa-whatsapp"></i> WhatsApp Support</button>
                     <button class="chat-send gold" style="background:linear-gradient(135deg,var(--gold),var(--healing));color:#000;" onclick="switchSection('enquiry')"><i class="fas fa-pen"></i> Enquiry</button>
-                    <button class="chat-send" style="background:var(--success);color:#000;" onclick="switchSection('donate')"><i class="fas fa-heart"></i> Donate</button>
+                    <button class="chat-send" style="background:linear-gradient(135deg,var(--success),var(--secondary));color:#000;" onclick="switchSection('donate')"><i class="fas fa-heart"></i> Donate</button>
                 </div>
             </div>
         </div>
@@ -423,27 +565,35 @@
         <!-- ===== SECTION: CHESS ===== -->
         <div id="section-chess" class="section">
             <div class="glass-card">
-                <div class="card-header"><i class="fas fa-chess-king" style="color:var(--gold);"></i><h3>♟️ Chess Arena</h3></div>
+                <div class="card-header"><i class="fas fa-chess-king" style="color:var(--gold);"></i><h3>♟️ Khensani AI Chess</h3></div>
                 <div class="chess-board-wrapper">
-                    <div id="chessBoard"></div>
+                    <div class="chess-board-container">
+                        <div id="chessBoard"></div>
+                    </div>
                     <div class="chess-sidebar">
-                        <div class="stat-item"><span>⚪ White to move</span><span id="turnIndicator">Yes</span></div>
-                        <div class="stat-item"><span>Difficulty</span>
+                        <div class="game-status" id="gameStatus">⚪ White to move</div>
+                        
+                        <div class="stat-item"><span>⚪ Turn</span><span id="turnIndicator">White</span></div>
+                        <div class="stat-item">
+                            <span>Difficulty</span>
                             <select id="chessDifficulty" style="background:rgba(0,0,0,0.5);border:1px solid var(--glass-border);border-radius:30px;padding:4px 12px;color:white;">
                                 <option value="easy">Easy</option>
                                 <option value="medium" selected>Medium</option>
                                 <option value="hard">Hard</option>
                             </select>
                         </div>
-                        <div class="stat-item"><span>Score</span><span id="chessScore">0</span></div>
-                        <div class="stat-item"><span>Games Played</span><span id="chessGamesPlayed">0</span></div>
-                        <div class="stat-item"><span>Games Won</span><span id="chessGamesWon">0</span></div>
+                        <div class="stat-item"><span>🏆 Score</span><span id="chessScore">0</span></div>
+                        <div class="stat-item"><span>🎮 Games Played</span><span id="chessGamesPlayed">0</span></div>
+                        <div class="stat-item"><span>🏅 Games Won</span><span id="chessGamesWon">0</span></div>
+                        <div class="stat-item"><span>⭐ Best Score</span><span id="bestScore">0</span></div>
+                        
                         <div class="chess-controls">
-                            <button id="chessUndoBtn" class="btn-chess" onclick="undoChessMove()"><i class="fas fa-undo"></i> Undo</button>
-                            <button id="chessNewBtn" class="btn-chess primary" onclick="newChessGame()"><i class="fas fa-plus"></i> New</button>
-                            <button id="chessHintBtn" class="btn-chess gold" onclick="chessHint()"><i class="fas fa-lightbulb"></i> Hint</button>
-                            <button id="chessWhatsAppBtn" class="btn-chess" style="background:#25D366;border-color:#25D366;" onclick="inviteChessWhatsApp()"><i class="fab fa-whatsapp"></i> Invite</button>
+                            <button class="btn-chess" onclick="chessEngine.undoMove()"><i class="fas fa-undo"></i> Undo</button>
+                            <button class="btn-chess primary" onclick="chessEngine.newGame()"><i class="fas fa-plus"></i> New</button>
+                            <button class="btn-chess gold" onclick="chessEngine.showHint()"><i class="fas fa-lightbulb"></i> Hint</button>
+                            <button class="btn-chess" onclick="chessEngine.toggleDifficulty()"><i class="fas fa-cog"></i> <span id="difficultyLabel">Medium</span></button>
                         </div>
+                        
                         <div class="move-history" id="moveHistory">No moves yet</div>
                     </div>
                 </div>
@@ -543,52 +693,139 @@
                     
                     <div class="form-section-title">2. Personal Information</div>
                     <div class="form-grid-2">
-                        <div class="form-group"><label>Full Name <span style="color:var(--danger);">*</span></label><input type="text" name="full_name" placeholder="Full Name" required></div>
-                        <div class="form-group"><label>ID Number / Passport</label><input type="text" name="id_number" placeholder="ID Number / Passport"></div>
-                        <div class="form-group"><label>Date of Birth</label><input type="date" name="date_of_birth"></div>
-                        <div class="form-group"><label>Gender</label>
-                            <select name="gender"><option value="">Select...</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not">Prefer not to say</option></select>
+                        <div class="form-group">
+                            <label>Full Name <span style="color:var(--danger);">*</span></label>
+                            <input type="text" name="full_name" placeholder="Full Name" required>
                         </div>
-                        <div class="form-group"><label>Phone Number <span style="color:var(--danger);">*</span></label><input type="tel" name="phone" placeholder="Phone Number" required></div>
-                        <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="Email Address"></div>
+                        <div class="form-group">
+                            <label>ID Number / Passport</label>
+                            <input type="text" name="id_number" placeholder="ID Number / Passport">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" name="date_of_birth">
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select name="gender">
+                                <option value="">Select...</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                                <option value="prefer_not">Prefer not to say</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number <span style="color:var(--danger);">*</span></label>
+                            <input type="tel" name="phone" placeholder="Phone Number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" name="email" placeholder="Email Address">
+                        </div>
                     </div>
                     
                     <div class="form-section-title">3. Guardian / Next of Kin (if applicable)</div>
                     <div class="form-grid-2">
-                        <div class="form-group"><label>Guardian Name</label><input type="text" name="guardian_name" placeholder="Guardian/Next of Kin Name"></div>
-                        <div class="form-group"><label>Guardian Phone</label><input type="tel" name="guardian_phone" placeholder="Guardian Phone Number"></div>
-                        <div class="form-group"><label>Relationship to Guardian</label><input type="text" name="guardian_relationship" placeholder="e.g. Parent, Spouse, Sibling"></div>
+                        <div class="form-group">
+                            <label>Guardian Name</label>
+                            <input type="text" name="guardian_name" placeholder="Guardian/Next of Kin Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Guardian Phone</label>
+                            <input type="tel" name="guardian_phone" placeholder="Guardian Phone Number">
+                        </div>
+                        <div class="form-group">
+                            <label>Relationship to Guardian</label>
+                            <input type="text" name="guardian_relationship" placeholder="e.g. Parent, Spouse, Sibling">
+                        </div>
                     </div>
                     
                     <div class="form-section-title">4. Address</div>
                     <div class="form-grid-2">
-                        <div class="form-group"><label>Street Address</label><input type="text" name="street_address" placeholder="Street Address"></div>
-                        <div class="form-group"><label>Suburb / Township</label><input type="text" name="suburb" placeholder="Suburb / Township"></div>
-                        <div class="form-group"><label>City</label><input type="text" name="city" placeholder="City"></div>
-                        <div class="form-group"><label>Province</label>
-                            <select name="province"><option value="">Select...</option><option value="gauteng">Gauteng</option><option value="western_cape">Western Cape</option><option value="eastern_cape">Eastern Cape</option><option value="kwazulu_natal">KwaZulu-Natal</option><option value="mpumalanga">Mpumalanga</option><option value="limpopo">Limpopo</option><option value="north_west">North West</option><option value="free_state">Free State</option><option value="northern_cape">Northern Cape</option></select>
+                        <div class="form-group">
+                            <label>Street Address</label>
+                            <input type="text" name="street_address" placeholder="Street Address">
                         </div>
-                        <div class="form-group"><label>Postal Code</label><input type="text" name="postal_code" placeholder="Postal Code"></div>
+                        <div class="form-group">
+                            <label>Suburb / Township</label>
+                            <input type="text" name="suburb" placeholder="Suburb / Township">
+                        </div>
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="city" placeholder="City">
+                        </div>
+                        <div class="form-group">
+                            <label>Province</label>
+                            <select name="province">
+                                <option value="">Select...</option>
+                                <option value="gauteng">Gauteng</option>
+                                <option value="western_cape">Western Cape</option>
+                                <option value="eastern_cape">Eastern Cape</option>
+                                <option value="kwazulu_natal">KwaZulu-Natal</option>
+                                <option value="mpumalanga">Mpumalanga</option>
+                                <option value="limpopo">Limpopo</option>
+                                <option value="north_west">North West</option>
+                                <option value="free_state">Free State</option>
+                                <option value="northern_cape">Northern Cape</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Postal Code</label>
+                            <input type="text" name="postal_code" placeholder="Postal Code">
+                        </div>
                     </div>
                     
                     <div class="form-section-title">5. Substance & Issue History</div>
                     <div class="form-grid-2">
-                        <div class="form-group"><label>Primary Issue <span style="color:var(--danger);">*</span></label>
-                            <select name="primary_issue" required><option value="">Please select...</option><option value="alcohol">Alcohol Dependence</option><option value="drugs">Drug Addiction</option><option value="gambling">Gambling Addiction</option><option value="mental_health">Mental Health</option><option value="trauma">Trauma / PTSD</option><option value="other">Other / Multiple</option></select>
+                        <div class="form-group">
+                            <label>Primary Issue <span style="color:var(--danger);">*</span></label>
+                            <select name="primary_issue" required>
+                                <option value="">Please select...</option>
+                                <option value="alcohol">Alcohol Dependence</option>
+                                <option value="drugs">Drug Addiction</option>
+                                <option value="gambling">Gambling Addiction</option>
+                                <option value="mental_health">Mental Health</option>
+                                <option value="trauma">Trauma / PTSD</option>
+                                <option value="other">Other / Multiple</option>
+                            </select>
                         </div>
-                        <div class="form-group"><label>Programme Preference <span style="color:var(--danger);">*</span></label>
-                            <select name="programme_type" required><option value="">Please select...</option><option value="outpatient">Outpatient Counselling</option><option value="residential">Residential Programme</option><option value="support_group">Support Group</option><option value="family_support">Family Support Programme</option><option value="not_sure">Not Sure / Need Guidance</option></select>
+                        <div class="form-group">
+                            <label>Programme Preference <span style="color:var(--danger);">*</span></label>
+                            <select name="programme_type" required>
+                                <option value="">Please select...</option>
+                                <option value="outpatient">Outpatient Counselling</option>
+                                <option value="residential">Residential Programme</option>
+                                <option value="support_group">Support Group</option>
+                                <option value="family_support">Family Support Programme</option>
+                                <option value="not_sure">Not Sure / Need Guidance</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="form-group"><label>Substance/Issue History</label><textarea name="substance_history" placeholder="Brief history of substance use or issue..."></textarea></div>
-                    <div class="form-group"><label>Your Story (Optional)</label><textarea name="brief_history" placeholder="Tell us your story..."></textarea></div>
+                    <div class="form-group">
+                        <label>Substance/Issue History</label>
+                        <textarea name="substance_history" placeholder="Brief history of substance use or issue (e.g., how long, what substances, any previous attempts at recovery)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Story (Optional)</label>
+                        <textarea name="brief_history" placeholder="Tell us your story... What brought you here? What are you hoping to achieve?"></textarea>
+                    </div>
                     
                     <div class="form-section-title">6. Contact Preferences</div>
                     <div class="form-grid-2">
-                        <div class="form-group"><label>Preferred Contact Method</label>
-                            <select name="preferred_contact"><option value="phone">Phone</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="any">Any</option></select>
+                        <div class="form-group">
+                            <label>Preferred Contact Method</label>
+                            <select name="preferred_contact">
+                                <option value="phone">Phone</option>
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="email">Email</option>
+                                <option value="any">Any</option>
+                            </select>
                         </div>
-                        <div class="form-group"><label>Best Time to Contact</label><input type="text" name="best_time" placeholder="e.g. Mornings, Afternoons, Evenings"></div>
+                        <div class="form-group">
+                            <label>Best Time to Contact</label>
+                            <input type="text" name="best_time" placeholder="e.g. Mornings, Afternoons, Evenings">
+                        </div>
                     </div>
                     
                     <div class="form-section-title">7. Consent</div>
@@ -609,67 +846,103 @@
         
         <!-- ===== SECTION: DONATE ===== -->
         <div id="section-donate" class="section">
-            <div class="glass-card gold-glow">
-                <div class="card-header gold"><i class="fas fa-heart"></i><h3>🙌 Support Real Ngempela</h3></div>
+            <div class="glass-card" style="border-color:var(--success); box-shadow: 0 0 30px rgba(0,255,136,0.15);">
+                <div class="card-header donate"><i class="fas fa-heart" style="color:var(--success);"></i><h3>💚 Support Real Ngempela</h3></div>
                 <p style="color:var(--text-secondary); margin-bottom:20px;">Your donation helps us continue healing lives and restoring families. Every contribution makes a difference.</p>
                 
+                <!-- Banking Details -->
                 <div class="bank-details">
-                    <h4 style="color:var(--gold); margin-bottom:8px;">🏦 Bank Details</h4>
-                    <p><strong>Account Holder:</strong> M E Mthethwa</p>
-                    <p><strong>Account Number:</strong> <span style="color:var(--gold); font-size:1.1rem;">1165812231</span></p>
-                    <p><strong>Bank:</strong> Nedbank</p>
-                    <p><strong>Reference:</strong> Your Name + "Donation"</p>
+                    <h4 style="color:var(--success); margin-bottom:12px;">🏦 Banking Details</h4>
+                    <div class="detail-row"><span class="label">Account Holder</span><span class="value">M E Mthethwa</span></div>
+                    <div class="detail-row"><span class="label">Account Number</span><span class="value">1165812231</span></div>
+                    <div class="detail-row"><span class="label">Bank</span><span class="value">Nedbank</span></div>
+                    <div class="detail-row"><span class="label">Reference</span><span class="value">Your Name + "Donation"</span></div>
                 </div>
                 
-                <p style="color:var(--text-secondary); font-size:0.8rem; margin:10px 0;">For any queries, contact us on WhatsApp or email.</p>
-                
-                <div style="display:flex; gap:10px; flex-wrap:wrap; margin:15px 0;">
-                    <button class="btn-primary-custom btn-whatsapp" style="flex:1; min-width:150px;" onclick="openWhatsAppDirect()">
-                        <i class="fab fa-whatsapp"></i> WhatsApp Us
-                    </button>
-                    <button class="btn-primary-custom btn-submit" style="flex:1; min-width:150px;" onclick="window.location.href='mailto:mduduziterrist1@gmail.com'">
-                        <i class="fas fa-envelope"></i> Email Us
-                    </button>
+                <!-- Donation Amount Quick Select -->
+                <div style="margin: 20px 0 15px;">
+                    <label style="display:block; font-size:0.8rem; color:var(--text-secondary); margin-bottom:10px;">💰 Select Donation Amount</label>
+                    <div class="donation-amount-grid" id="donationAmountGrid">
+                        <div class="donation-amount-btn" data-amount="100" onclick="selectDonationAmount(100)"><span class="amount">R100</span></div>
+                        <div class="donation-amount-btn" data-amount="250" onclick="selectDonationAmount(250)"><span class="amount">R250</span></div>
+                        <div class="donation-amount-btn" data-amount="500" onclick="selectDonationAmount(500)"><span class="amount">R500</span></div>
+                        <div class="donation-amount-btn" data-amount="1000" onclick="selectDonationAmount(1000)"><span class="amount">R1000</span></div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <input type="number" id="customDonationAmount" class="form-group input" placeholder="Custom amount (R)" style="width:100%;padding:12px 14px;background:rgba(0,0,0,0.5);border:1px solid var(--glass-border);border-radius:16px;color:white;font-size:14px;" oninput="selectCustomDonation(this.value)">
+                    </div>
                 </div>
                 
-                <form action="https://formsubmit.co/mduduziterrist1@gmail.com" method="POST" style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:20px;">
-                    <input type="hidden" name="_subject" value="Real Ngempela - Donation Confirmation">
+                <!-- Donation Confirmation Form -->
+                <form action="https://formsubmit.co/mduduziterrist1@gmail.com" method="POST" id="donationForm">
+                    <input type="hidden" name="_subject" value="Real Ngempela Recovery Centre - Donation Confirmation">
                     <input type="hidden" name="_captcha" value="true">
                     <input type="hidden" name="_template" value="box">
-                    <input type="hidden" name="_next" value="https://ngempela.co.za/thank-you">
+                    <input type="hidden" name="_next" value="https://ngempela.co.za/thank-you-donation">
                     
-                    <div class="form-section-title" style="margin-top:0;">📝 Tell Us About Your Donation</div>
-                    
-                    <div class="form-grid-2">
-                        <div class="form-group"><label>Full Name <span style="color:var(--danger);">*</span></label><input type="text" name="donor_name" placeholder="Your full name" required></div>
-                        <div class="form-group"><label>Email Address <span style="color:var(--danger);">*</span></label><input type="email" name="donor_email" placeholder="Your email address" required></div>
-                    </div>
-                    
-                    <div class="form-group"><label>Phone Number</label><input type="tel" name="donor_phone" placeholder="Your phone number"></div>
+                    <div class="form-section-title donate-title">📝 Donation Confirmation</div>
                     
                     <div class="form-grid-2">
-                        <div class="form-group"><label>Amount Donated (R)</label>
-                            <select name="donation_amount"><option value="100">R100</option><option value="250">R250</option><option value="500">R500</option><option value="1000">R1000</option><option value="other">Other</option></select>
+                        <div class="form-group">
+                            <label>Full Name <span style="color:var(--danger);">*</span></label>
+                            <input type="text" name="donor_name" placeholder="Your full name" required>
                         </div>
-                        <div class="form-group"><label>Donation Date</label><input type="date" name="donation_date"></div>
+                        <div class="form-group">
+                            <label>Email Address <span style="color:var(--danger);">*</span></label>
+                            <input type="email" name="donor_email" placeholder="Your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number <span style="color:var(--danger);">*</span></label>
+                            <input type="tel" name="donor_phone" placeholder="Your phone number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount Donated <span style="color:var(--danger);">*</span></label>
+                            <input type="number" name="donation_amount" id="donationAmountInput" placeholder="e.g. 250" required step="1" min="1">
+                        </div>
                     </div>
                     
-                    <div class="form-group"><label>Reference Number (from your bank transfer)</label><input type="text" name="donation_reference" placeholder="Your bank reference number"></div>
+                    <div class="form-group">
+                        <label>Reference Used</label>
+                        <input type="text" name="donation_reference" placeholder="The reference you used when depositing (e.g. John Doe Donation)">
+                    </div>
                     
-                    <div class="form-group"><label>Your Message (Optional)</label><textarea name="donor_message" placeholder="Any message for the team or the residents..." rows="3"></textarea></div>
+                    <div class="form-group">
+                        <label>Date of Payment</label>
+                        <input type="date" name="payment_date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Message (Optional)</label>
+                        <textarea name="donation_message" placeholder="Any message you'd like to share with us..."></textarea>
+                    </div>
+                    
+                    <div class="form-section-title donate-title">Contact for Confirmation</div>
+                    <div style="display:flex; gap:15px; flex-wrap:wrap; margin:10px 0 20px;">
+                        <button type="button" class="btn-whatsapp-card" style="width:auto;padding:10px 20px;" onclick="openWhatsAppDonation()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                        <button type="button" class="btn-whatsapp-card" style="width:auto;padding:10px 20px;background:var(--primary);" onclick="window.location.href='mailto:mduduziterrist1@gmail.com'"><i class="fas fa-envelope"></i> Email</button>
+                    </div>
                     
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" name="donation_consent" required>
-                            I confirm that I have made a donation to the bank account provided above. 
+                            I confirm that I have made the donation and the information provided is correct.
                             <span style="color:var(--danger);">*</span>
                         </label>
                     </div>
                     
-                    <button type="submit" class="btn-primary-custom btn-donate" style="margin-top:15px;">
-                        <i class="fas fa-paper-plane"></i> Confirm Donation
-                    </button>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:20px;">
+                        <button type="submit" class="btn-primary-custom btn-donate" style="flex:1;min-width:200px;">
+                            <i class="fas fa-paper-plane"></i> Confirm Donation
+                        </button>
+                        <button type="button" class="btn-primary-custom btn-whatsapp" style="flex:1;min-width:200px;margin-top:0;" onclick="window.location.href='https://wa.me/27670006523'">
+                            <i class="fab fa-whatsapp"></i> WhatsApp Confirmation
+                        </button>
+                    </div>
                 </form>
+                
+                <div style="margin-top:15px; text-align:center; font-size:0.7rem; color:var(--text-secondary);">
+                    <i class="fas fa-phone"></i> 067 000 6523 · <i class="fas fa-envelope"></i> mduduziterrist1@gmail.com
+                </div>
             </div>
         </div>
         
@@ -712,7 +985,7 @@
 
     <script>
         // ============================================================
-        // REAL NGEMPELA RECOVERY CENTRE — LOGIN FIXED
+        // REAL NGEMPELA RECOVERY CENTRE — v2.0 WITH DONATION FORM
         // ============================================================
         
         // ===== FIREBASE =====
@@ -752,206 +1025,11 @@
         var trialDaysRemaining = 7;
         var isPaid = false;
         var incognitoActive = false;
-        var isAppInitialized = false;
+        var selectedDonationAmount = 0;
         
         // ===== WHATSAPP =====
         var WHATSAPP_NUMBER = "27670006523";
         var WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/RealNgempelaRecovery";
-        
-        // ============================================================
-        // CHESS — FROM TSHAKA M ACADEMY (WORKING)
-        // ============================================================
-        var chess = null;
-        var isAIThinking = false;
-        var gameHistory = [];
-        var chessScore = 0;
-        var chessGamesPlayed = 0;
-        var chessGamesWon = 0;
-        var selectedSquare = null;
-        var validMoves = [];
-        
-        function initChess() {
-            try {
-                if (typeof Chess !== 'undefined') { 
-                    chess = new Chess(); 
-                } else { 
-                    chess = createFallbackChess(); 
-                }
-                renderChessBoard();
-            } catch(e) { 
-                console.warn('Chess init error:', e); 
-                chess = createFallbackChess(); 
-                renderChessBoard(); 
-            }
-        }
-        
-        function createFallbackChess() {
-            return {
-                fen: function() { return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'; },
-                moves: function() { return []; },
-                move: function() { return null; },
-                turn: function() { return 'w'; },
-                game_over: function() { return false; },
-                in_checkmate: function() { return false; },
-                in_draw: function() { return false; },
-                in_check: function() { return false; },
-                history: function() { return []; },
-                get: function() { return null; },
-                undo: function() { return null; }
-            };
-        }
-        
-        function renderChessBoard() {
-            try {
-                var boardElement = document.getElementById('chessBoard');
-                if (!boardElement) return;
-                if (!chess) {
-                    boardElement.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">♟️ Chess engine loading...</div>';
-                    return;
-                }
-                var fen = chess.fen();
-                boardElement.innerHTML = fenToBoardHtml(fen);
-                updateChessStatus();
-            } catch(e) { console.warn('Chess render error:', e); }
-        }
-        
-        function fenToBoardHtml(fen) {
-            var parts = fen.split(' ');
-            var board = parts[0];
-            var rows = board.split('/');
-            var html = '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;aspect-ratio:1/1;background:#1a1a2e;padding:8px;border-radius:12px;">';
-            var pieceMap = { 'r':'♜','n':'♞','b':'♝','q':'♛','k':'♚','p':'♟','R':'♖','N':'♘','B':'♗','Q':'♕','K':'♔','P':'♙' };
-            for (var r = 0; r < 8; r++) {
-                for (var c = 0; c < 8; c++) {
-                    var isDark = (r + c) % 2 === 1;
-                    var squareName = String.fromCharCode(97 + c) + (8 - r);
-                    var piece = null;
-                    var rowData = rows[r] || '';
-                    var colPos = 0;
-                    for (var i = 0; i < rowData.length && colPos <= c; i++) {
-                        var ch = rowData[i];
-                        if (ch >= '1' && ch <= '8') { colPos += parseInt(ch); } 
-                        else { if (colPos === c) { piece = ch; } colPos++; }
-                    }
-                    var pieceChar = piece ? pieceMap[piece] : '';
-                    var color = piece && piece === piece.toUpperCase() ? '#fff' : '#aaa';
-                    var bg = isDark ? '#2c2c3e' : '#3a3a5c';
-                    var isSelected = (selectedSquare === squareName);
-                    var isMove = validMoves.some(function(m) { return m.to === squareName; });
-                    var isCapture = isMove && chess && chess.get(squareName);
-                    html += '<div class="chess-square ' + (isDark ? 'dark-square' : 'light-square') + 
-                        (isSelected ? ' selected-square' : '') + 
-                        (isMove && !isCapture ? ' valid-move' : '') + 
-                        (isMove && isCapture ? ' capture-move' : '') + 
-                        '" data-pos="' + squareName + '" style="background:' + bg + ';color:' + color + ';text-shadow:0 0 10px rgba(0,180,216,0.3);" onclick="handleChessClick(this)">' + pieceChar + '</div>';
-                }
-            }
-            html += '</div>';
-            return html;
-        }
-        
-        function updateChessStatus() {
-            try {
-                if (!chess) return;
-                var turn = chess.turn() === 'w' ? 'White' : 'Black';
-                document.getElementById('turnIndicator').textContent = turn + ' to move';
-                document.getElementById('chessScore').textContent = chessScore;
-                document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
-                document.getElementById('chessGamesWon').textContent = chessGamesWon;
-                var history = chess.history({ verbose: true });
-                document.getElementById('moveHistory').textContent = history.map(function(m) { return m.san; }).join(' ') || 'No moves yet';
-            } catch(e) { console.warn('Update chess status error:', e); }
-        }
-        
-        function handleChessClick(squareEl) {
-            try {
-                if (!chess || isAIThinking || chess.game_over()) return;
-                var pos = squareEl.dataset.pos;
-                if (!pos) return;
-                if (selectedSquare) {
-                    var move = chess.move({ from: selectedSquare, to: pos, promotion: 'q' });
-                    if (move) {
-                        selectedSquare = null; validMoves = [];
-                        renderChessBoard();
-                        if (!chess.game_over()) { setTimeout(function() { makeAIMove(); }, 500); } 
-                        else {
-                            if (chess.in_checkmate()) { chessScore += 10; chessGamesWon++; showToast('🎉 Checkmate! You win!', 'success'); } 
-                            else { showToast('🤝 Game drawn.', 'warning'); }
-                        }
-                    } else {
-                        var piece = chess.get(pos);
-                        if (piece && piece.color === 'w') { selectSquare(pos); } 
-                        else { selectedSquare = null; validMoves = []; renderChessBoard(); }
-                    }
-                } else { selectSquare(pos); }
-            } catch(e) { console.warn('Chess click error:', e); }
-        }
-        
-        function selectSquare(square) {
-            try {
-                var piece = chess.get(square);
-                if (piece && piece.color === 'w') {
-                    selectedSquare = square;
-                    validMoves = chess.moves({ square: square, verbose: true });
-                    renderChessBoard();
-                }
-            } catch(e) { console.warn('Select square error:', e); }
-        }
-        
-        function makeAIMove() {
-            try {
-                if (!chess || chess.game_over()) return;
-                var moves = chess.moves();
-                if (moves.length === 0) return;
-                var move = moves[Math.floor(Math.random() * moves.length)];
-                chess.move(move);
-                renderChessBoard();
-                if (chess.game_over()) {
-                    if (chess.in_checkmate()) { showToast('♟️ Checkmate! AI wins.', 'error'); } 
-                    else { showToast('🤝 Game drawn.', 'warning'); }
-                }
-            } catch(e) { console.warn('AI move error:', e); }
-        }
-        
-        function newChessGame() {
-            try {
-                if (typeof Chess !== 'undefined') { chess = new Chess(); } 
-                else { chess = createFallbackChess(); }
-                gameHistory = []; selectedSquare = null; validMoves = [];
-                chessGamesPlayed++;
-                renderChessBoard();
-                document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
-                document.getElementById('chessGames').textContent = chessGamesPlayed;
-                showToast('♟️ New chess game started!', 'success');
-            } catch(e) { console.warn('New chess game error:', e); }
-        }
-        
-        function undoChessMove() {
-            try {
-                if (!chess) return;
-                if (gameHistory.length === 0) return;
-                chess.undo(); gameHistory.pop();
-                if (chess.turn() === 'b') { chess.undo(); gameHistory.pop(); }
-                selectedSquare = null; validMoves = [];
-                renderChessBoard();
-            } catch(e) { console.warn('Undo error:', e); }
-        }
-        
-        function chessHint() {
-            try {
-                if (!chess) return;
-                var moves = chess.moves({ verbose: true });
-                if (moves.length > 0) { showToast('💡 Hint: Try moving ' + moves[0].from + ' to ' + moves[0].to, 'info'); }
-            } catch(e) { console.warn('Hint error:', e); }
-        }
-        
-        function inviteChessWhatsApp() {
-            var phone = document.getElementById('profilePhone').value || '27825551234';
-            var clean = phone.replace(/\D/g, '');
-            var msg = encodeURIComponent('♟️ I challenge you to a chess game on Real Ngempela Recovery Centre! Join me and let\'s play!');
-            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
-            showToast('💬 Invite sent via WhatsApp!', 'success');
-        }
         
         // ============================================================
         // WHATSAPP FUNCTIONS
@@ -962,6 +1040,14 @@
             var msg = encodeURIComponent("Hello, I need help with recovery. Please assist me. Real Ngempela Recovery Centre.");
             window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
             showToast('💬 Opening WhatsApp...', 'success');
+        }
+        
+        function openWhatsAppDonation() {
+            var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
+            var clean = phone.replace(/\D/g, '');
+            var amount = document.getElementById('donationAmountInput').value || 'R';
+            var msg = encodeURIComponent("Hello, I have made a donation of " + amount + " to Real Ngempela Recovery Centre. Please confirm receipt.");
+            window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
         }
         
         function openWhatsAppGroup(type) {
@@ -975,6 +1061,32 @@
         function openWhatsAppGroupLink() {
             window.open(WHATSAPP_GROUP_LINK, '_blank');
             showToast('💬 Joining Recovery Support Group...', 'success');
+        }
+        
+        // ============================================================
+        // DONATION FUNCTIONS
+        // ============================================================
+        function selectDonationAmount(amount) {
+            selectedDonationAmount = amount;
+            document.querySelectorAll('.donation-amount-btn').forEach(function(btn) {
+                btn.classList.remove('selected');
+                if (parseInt(btn.dataset.amount) === amount) {
+                    btn.classList.add('selected');
+                }
+            });
+            document.getElementById('donationAmountInput').value = amount;
+            document.getElementById('customDonationAmount').value = '';
+            showToast('💰 Donation amount: R' + amount, 'info');
+        }
+        
+        function selectCustomDonation(value) {
+            if (value && parseInt(value) > 0) {
+                document.querySelectorAll('.donation-amount-btn').forEach(function(btn) {
+                    btn.classList.remove('selected');
+                });
+                document.getElementById('donationAmountInput').value = parseInt(value);
+                selectedDonationAmount = parseInt(value);
+            }
         }
         
         // ============================================================
@@ -1041,9 +1153,9 @@
             { quote: "The greatest healing is the one that happens from within.", author: "African Proverb" },
             { quote: "When you save one child, you save yourself, your family, and the community.", author: "Prophet Conforter Mdu" },
             { quote: "God is alive. He heals the brokenhearted and binds up their wounds.", author: "Psalm 147:3" },
-            { quote: "From the ashes of yesterday, a new dawn rises.", author: "Unknown" },
+            { quote: "From the ashes of yesterday, a new dawn rises. The chains that once held you now fall away.", author: "Unknown" },
             { quote: "You are what you choose to become. Choose healing. Choose life.", author: "Unknown" },
-            { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu" }
+            { quote: "The journey of a thousand miles begins with a single step. Take that step today.", author: "Lao Tzu" }
         ];
         var currentPrayerIndex = 0;
         
@@ -1125,7 +1237,7 @@
                 b.classList.remove('active');
                 if (b.dataset.section === sectionId) b.classList.add('active');
             });
-            if (sectionId === 'chess') setTimeout(renderChessBoard, 100);
+            if (sectionId === 'chess') setTimeout(function() { if (chessEngine) chessEngine.updateBoard(); }, 100);
         }
         
         // ============================================================
@@ -1133,20 +1245,15 @@
         // ============================================================
         function enterDemo() {
             console.log('🚀 TRIAL LOGIN');
-            try {
-                isDemo = true;
-                currentUser = { uid: 'demo', email: 'trial@ngempela.co.za' };
-                userEmailDisplay.textContent = 'Trial User';
-                loginOverlay.classList.add('hidden');
-                appContainer.style.display = 'block';
-                loginError.textContent = '';
-                loadTrialData();
-                loadSoberData();
-                initApp();
-            } catch(e) {
-                console.error('Demo login error:', e);
-                loginError.textContent = '❌ Error loading app. Please refresh.';
-            }
+            isDemo = true;
+            currentUser = { uid: 'demo', email: 'trial@ngempela.co.za' };
+            userEmailDisplay.textContent = 'Trial User';
+            loginOverlay.classList.add('hidden');
+            appContainer.style.display = 'block';
+            loginError.textContent = '';
+            loadTrialData();
+            loadSoberData();
+            initApp();
         }
         
         function loginWithGoogle() {
@@ -1181,7 +1288,6 @@
             idToken = null;
             loginOverlay.classList.remove('hidden');
             appContainer.style.display = 'none';
-            isAppInitialized = false;
         }
         
         auth.onAuthStateChanged(function(user) {
@@ -1285,6 +1391,291 @@
         chatInput.onkeypress = function(e) { if (e.key === 'Enter') sendChatMessage(); };
         
         // ============================================================
+        // ENHANCED CHESS ENGINE
+        // ============================================================
+        var chessEngine = null;
+        
+        class EnhancedChessEngine {
+            constructor() {
+                this.game = new Chess();
+                this.selectedSquare = null;
+                this.validMoves = [];
+                this.difficulty = 'medium';
+                this.soundEnabled = true;
+                this.chessScore = 0;
+                this.gamesPlayed = 0;
+                this.gamesWon = 0;
+                this.bestScore = 0;
+                
+                this.pieceUnicode = {
+                    'wK': '♔', 'wQ': '♕', 'wR': '♖', 'wB': '♗', 'wN': '♘', 'wP': '♙',
+                    'bK': '♚', 'bQ': '♛', 'bR': '♜', 'bB': '♝', 'bN': '♞', 'bP': '♟'
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.createBoard();
+                this.updateBoard();
+                this.loadStats();
+                console.log('♟️ Khensani AI Chess Engine Ready!');
+            }
+
+            createBoard() {
+                const board = document.getElementById('chessBoard');
+                board.innerHTML = '';
+                
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const square = document.createElement('div');
+                        square.className = `chess-square ${(row + col) % 2 === 0 ? 'light-square' : 'dark-square'}`;
+                        square.dataset.square = this.getSquareName(row, col);
+                        square.onclick = () => this.handleSquareClick(this.getSquareName(row, col));
+                        board.appendChild(square);
+                    }
+                }
+            }
+
+            getSquareName(row, col) {
+                const files = 'abcdefgh';
+                const ranks = '87654321';
+                return files[col] + ranks[row];
+            }
+
+            updateBoard() {
+                document.querySelectorAll('.chess-square').forEach(square => {
+                    square.innerHTML = '';
+                    square.classList.remove('selected-square', 'valid-move', 'capture-move');
+                });
+
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const squareName = this.getSquareName(row, col);
+                        const piece = this.game.get(squareName);
+                        
+                        if (piece) {
+                            const square = document.querySelector(`[data-square="${squareName}"]`);
+                            const pieceCode = piece.color + piece.type.toUpperCase();
+                            square.innerHTML = this.pieceUnicode[pieceCode];
+                            square.style.color = piece.color === 'w' ? '#FFFFFF' : '#FF6B6B';
+                            square.style.textShadow = `0 0 15px ${piece.color === 'w' ? 'var(--gold)' : 'var(--danger)'}`;
+                        }
+                    }
+                }
+
+                this.updateGameStatus();
+                this.updateStats();
+            }
+
+            handleSquareClick(square) {
+                if (this.selectedSquare) {
+                    const move = this.game.move({
+                        from: this.selectedSquare,
+                        to: square,
+                        promotion: 'q'
+                    });
+
+                    if (move) {
+                        this.selectedSquare = null;
+                        this.validMoves = [];
+                        this.updateBoard();
+                        
+                        this.chessScore += 10;
+                        this.addToMoveHistory(move.san);
+                        
+                        if (!this.game.game_over()) {
+                            setTimeout(() => this.makeAIMove(), 600);
+                        } else {
+                            this.handleGameEnd();
+                        }
+                    } else {
+                        const piece = this.game.get(square);
+                        if (piece && piece.color === 'w') {
+                            this.selectSquare(square);
+                        } else {
+                            this.selectedSquare = null;
+                            this.validMoves = [];
+                            this.updateBoard();
+                        }
+                    }
+                } else {
+                    this.selectSquare(square);
+                }
+            }
+
+            selectSquare(square) {
+                const piece = this.game.get(square);
+                if (piece && piece.color === 'w') {
+                    this.selectedSquare = square;
+                    this.validMoves = this.game.moves({ 
+                        square: square, 
+                        verbose: true 
+                    });
+                    
+                    document.querySelector(`[data-square="${square}"]`).classList.add('selected-square');
+                    
+                    this.validMoves.forEach(move => {
+                        const targetSquare = document.querySelector(`[data-square="${move.to}"]`);
+                        if (targetSquare) {
+                            const isCapture = this.game.get(move.to);
+                            targetSquare.classList.add(isCapture ? 'capture-move' : 'valid-move');
+                        }
+                    });
+                }
+            }
+
+            makeAIMove() {
+                if (this.game.game_over()) return;
+
+                const moves = this.game.moves();
+                if (moves.length === 0) return;
+
+                let move;
+                const captures = moves.filter(m => m.includes('x'));
+                const checks = moves.filter(m => m.includes('+'));
+                
+                if (captures.length > 0) {
+                    move = captures[Math.floor(Math.random() * captures.length)];
+                } else if (checks.length > 0) {
+                    move = checks[Math.floor(Math.random() * checks.length)];
+                } else {
+                    move = moves[Math.floor(Math.random() * moves.length)];
+                }
+
+                this.game.move(move);
+                this.updateBoard();
+                this.addToMoveHistory(move);
+                
+                if (this.game.game_over()) {
+                    this.handleGameEnd();
+                }
+            }
+
+            updateGameStatus() {
+                let status = '';
+                let statusColor = 'var(--gold)';
+                
+                if (this.game.in_checkmate()) {
+                    const winner = this.game.turn() === 'w' ? 'Black' : 'White';
+                    status = `🎉 Checkmate! ${winner} wins!`;
+                    statusColor = this.game.turn() === 'w' ? 'var(--danger)' : 'var(--success)';
+                    if (this.game.turn() === 'b') {
+                        this.chessScore += 100;
+                        this.gamesWon++;
+                        this.saveStats();
+                        showToast('🎉 Checkmate! You win!', 'success');
+                    } else {
+                        showToast('♟️ Checkmate! AI wins.', 'error');
+                    }
+                } else if (this.game.in_draw()) {
+                    status = "🤝 Game drawn!";
+                    statusColor = 'var(--primary)';
+                    showToast('🤝 Game drawn.', 'warning');
+                } else if (this.game.in_check()) {
+                    status = `⚡ ${this.game.turn() === 'w' ? 'White' : 'Black'} is in check!`;
+                    statusColor = 'var(--danger)';
+                } else {
+                    status = `${this.game.turn() === 'w' ? '⚪ White' : '⚫ Black'} to move`;
+                }
+
+                const statusElement = document.getElementById('gameStatus');
+                statusElement.textContent = status;
+                statusElement.style.color = statusColor;
+                statusElement.style.borderColor = statusColor;
+                document.getElementById('turnIndicator').textContent = this.game.turn() === 'w' ? 'White' : 'Black';
+            }
+
+            handleGameEnd() {
+                this.gamesPlayed++;
+                if (this.chessScore > this.bestScore) {
+                    this.bestScore = this.chessScore;
+                }
+                this.saveStats();
+                this.updateStats();
+                document.getElementById('chessGames').textContent = this.gamesPlayed;
+            }
+
+            addToMoveHistory(move) {
+                const history = document.getElementById('moveHistory');
+                const moveNumber = Math.ceil(this.game.history().length / 2);
+                const moveElement = document.createElement('div');
+                moveElement.textContent = `${moveNumber}. ${move}`;
+                history.appendChild(moveElement);
+                history.scrollTop = history.scrollHeight;
+            }
+
+            updateStats() {
+                document.getElementById('chessScore').textContent = this.chessScore;
+                document.getElementById('chessGamesPlayed').textContent = this.gamesPlayed;
+                document.getElementById('chessGamesWon').textContent = this.gamesWon;
+                document.getElementById('bestScore').textContent = this.bestScore;
+                document.getElementById('chessGames').textContent = this.gamesPlayed;
+            }
+
+            saveStats() {
+                try {
+                    localStorage.setItem('ngempela_chess_score', this.chessScore);
+                    localStorage.setItem('ngempela_chess_games', this.gamesPlayed);
+                    localStorage.setItem('ngempela_chess_wins', this.gamesWon);
+                    localStorage.setItem('ngempela_chess_best', this.bestScore);
+                } catch(e) { console.log('Stats save error'); }
+            }
+
+            loadStats() {
+                try {
+                    this.chessScore = parseInt(localStorage.getItem('ngempela_chess_score')) || 0;
+                    this.gamesPlayed = parseInt(localStorage.getItem('ngempela_chess_games')) || 0;
+                    this.gamesWon = parseInt(localStorage.getItem('ngempela_chess_wins')) || 0;
+                    this.bestScore = parseInt(localStorage.getItem('ngempela_chess_best')) || 0;
+                    this.updateStats();
+                    document.getElementById('chessGames').textContent = this.gamesPlayed;
+                } catch(e) { console.log('Stats load error'); }
+            }
+
+            newGame() {
+                this.game = new Chess();
+                this.selectedSquare = null;
+                this.validMoves = [];
+                this.updateBoard();
+                document.getElementById('moveHistory').innerHTML = '';
+                showToast('♟️ New chess game started!', 'success');
+            }
+
+            undoMove() {
+                if (this.game.history().length > 0) {
+                    this.game.undo();
+                    this.game.undo();
+                    this.selectedSquare = null;
+                    this.validMoves = [];
+                    this.updateBoard();
+                    
+                    const history = document.getElementById('moveHistory');
+                    if (history.children.length > 0) {
+                        history.removeChild(history.lastChild);
+                    }
+                }
+            }
+
+            toggleDifficulty() {
+                const difficulties = ['easy', 'medium', 'hard'];
+                const currentIndex = difficulties.indexOf(this.difficulty);
+                this.difficulty = difficulties[(currentIndex + 1) % difficulties.length];
+                document.getElementById('difficultyLabel').textContent = 
+                    this.difficulty.charAt(0).toUpperCase() + this.difficulty.slice(1);
+                showToast('♟️ Difficulty: ' + this.difficulty, 'info');
+            }
+
+            showHint() {
+                const moves = this.game.moves({ verbose: true });
+                if (moves.length > 0) {
+                    const hint = moves[Math.floor(Math.random() * moves.length)];
+                    showToast('💡 Hint: Try moving ' + hint.from + ' to ' + hint.to, 'info');
+                }
+            }
+        }
+        
+        // ============================================================
         // QUIZ
         // ============================================================
         var questionBank = {
@@ -1296,7 +1687,8 @@
                 { q: 'What does Real Ngempela provide?', options: ['Shelter, food, treatment, skills', 'Only food', 'Only shelter', 'Only medicine'], answer: 0 }
             ],
             math: [
-                { q: 'Solve: 2x + 5 = 13', options: ['x = 4', 'x = 5', 'x = 6', 'x = 3'], answer: 0 }
+                { q: 'Solve: 2x + 5 = 13', options: ['x = 4', 'x = 5', 'x = 6', 'x = 3'], answer: 0 },
+                { q: 'What is the area of a circle with radius 5?', options: ['25π', '10π', '5π', '50π'], answer: 0 }
             ],
             science: [
                 { q: 'What is the chemical symbol for water?', options: ['H2O', 'CO2', 'NaCl', 'HCl'], answer: 0 }
@@ -1425,33 +1817,20 @@
         // INIT
         // ============================================================
         function initApp() {
-            if (isAppInitialized) return;
-            isAppInitialized = true;
-            
-            console.log('🚀 Real Ngempela Recovery Centre · Initializing...');
-            
-            // Initialize chess after a short delay to ensure DOM is ready
-            setTimeout(function() {
-                initChess();
-            }, 200);
-            
+            console.log('🚀 Real Ngempela Recovery Centre v2.0 · Initializing...');
+            chessEngine = new EnhancedChessEngine();
             newPrayer();
             loadSoberData();
             loadTrialData();
-            
-            document.getElementById('chessGamesPlayed').textContent = chessGamesPlayed;
-            document.getElementById('chessGames').textContent = chessGamesPlayed;
-            
-            console.log('✅ Real Ngempela Recovery Centre · Loaded');
+            console.log('✅ Real Ngempela Recovery Centre v2.0 · Loaded');
             console.log('   👤 User:', isDemo ? 'Trial' : (currentUser ? currentUser.email : 'None'));
             console.log('   💚 Sober Days:', soberDays);
             console.log('   ⏳ Trial Days:', trialDaysRemaining);
             console.log('   📱 WhatsApp:', WHATSAPP_NUMBER);
             console.log('   📧 Enquiry Email: mduduziterrist1@gmail.com');
-            console.log('   ♟️ Chess: Loaded and ready');
         }
         
-        console.log('✅ Real Ngempela Recovery Centre · Loading...');
+        console.log('✅ Real Ngempela Recovery Centre v2.0 · Loading...');
     </script>
 </body>
 </html>
