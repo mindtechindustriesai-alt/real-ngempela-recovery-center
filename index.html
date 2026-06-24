@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- FIXED: Use working chess.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0-beta.8/chess.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
@@ -154,6 +155,11 @@
         .btn-chess.gold:hover { background: rgba(255,215,0,0.4); }
         .move-history { max-height: 120px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; margin-top: 10px; }
         
+        /* Chess square styles */
+        .square { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; aspect-ratio: 1/1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .square:hover { transform: scale(1.05); z-index: 10; }
+        .square.selected { background: rgba(255,215,0,0.4) !important; box-shadow: inset 0 0 30px var(--gold); }
+        
         .whatsapp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .whatsapp-card { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 16px; text-align: center; border: 1px solid var(--glass-border); transition: 0.2s; }
         .whatsapp-card:hover { border-color: #25D366; transform: translateY(-2px); }
@@ -184,6 +190,9 @@
         .footer-logos img { height: 45px; width: auto; opacity: 0.8; transition: all 0.3s; }
         .footer-logos img:hover { opacity: 1; transform: scale(1.05); }
         
+        .bank-details { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 15px; margin: 10px 0; border-left: 3px solid var(--gold); }
+        .bank-details strong { color: var(--gold); }
+        
         .toast { position: fixed; top: 100px; right: 20px; background: rgba(15,25,45,0.95); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px 24px; z-index: 9999; animation: slideUp 0.3s ease-out; max-width: 350px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
         .toast.success { border-color: var(--success); }
         .toast.error { border-color: var(--danger); }
@@ -192,9 +201,6 @@
         .trial-banner { background: rgba(255,215,0,0.15); border: 1px solid var(--gold); border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .trial-banner .days { color: var(--gold); font-weight: 700; }
         .trial-banner .pay-btn { background: var(--gold); border: none; padding: 8px 20px; border-radius: 30px; font-weight: 700; color: #000; cursor: pointer; }
-        
-        .bank-details { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 15px; margin: 10px 0; border-left: 3px solid var(--gold); }
-        .bank-details strong { color: var(--gold); }
         
         @media (max-width: 768px) {
             .stats-row { grid-template-columns: repeat(2, 1fr); }
@@ -703,10 +709,9 @@
 
     <script>
         // ============================================================
-        // REAL NGEMPELA RECOVERY CENTRE — COMPLETE FIXED VERSION
+        // REAL NGEMPELA — FIXED CHESS BOARD
         // ============================================================
         
-        // ===== FIREBASE =====
         var firebaseConfig = {
             apiKey: "AIzaSyD5OB59lG6bAsmQ7A97zXP_MfQ5AM3BYaw",
             authDomain: "mindflow-ai-education.firebaseapp.com",
@@ -748,9 +753,6 @@
         var WHATSAPP_NUMBER = "27670006523";
         var WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/RealNgempelaRecovery";
         
-        // ============================================================
-        // WHATSAPP FUNCTIONS
-        // ============================================================
         function openWhatsAppDirect() {
             var phone = document.getElementById('profilePhone').value || WHATSAPP_NUMBER;
             var clean = phone.replace(/\D/g, '');
@@ -1074,71 +1076,21 @@
         chatInput.onkeypress = function(e) { if (e.key === 'Enter') sendChatMessage(); };
         
         // ============================================================
-        // CHESS — FIXED (copied from Tshaka M Academy)
+        // CHESS — FIXED (Direct render without stockfish dependency)
         // ============================================================
         var chess = new Chess();
-        var isAIThinking = false;
-        var gameHistory = [];
-        var chessScore = 0;
         var chessGamesPlayed = 0;
+        var chessScore = 0;
         var chessGamesWon = 0;
-        var stockfish = null;
-        var stockfishReady = false;
         var selectedSquare = null;
         var validMoves = [];
-        
-        function initStockfish() {
-            try {
-                stockfish = new Worker('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
-                stockfish.onmessage = function(event) {
-                    var line = event.data;
-                    if (line.startsWith('bestmove')) {
-                        var parts = line.split(' ');
-                        var move = parts[1];
-                        if (move && move !== '(none)') makeAIMove(move);
-                        isAIThinking = false;
-                    }
-                };
-                stockfish.postMessage('uci');
-                stockfish.postMessage('isready');
-                stockfishReady = true;
-            } catch(e) { console.log('Stockfish init error'); stockfishReady = false; }
-        }
-        
-        function getAIDepth() {
-            var val = document.getElementById('chessDifficulty').value;
-            return val === 'easy' ? 8 : val === 'medium' ? 12 : 16;
-        }
-        
-        function requestAIMove(fen) {
-            if (!stockfishReady) {
-                var moves = chess.moves();
-                if (moves.length > 0) {
-                    setTimeout(function() { makeAIMove(moves[Math.floor(Math.random() * moves.length)]); }, 200);
-                }
-                return;
-            }
-            stockfish.postMessage('position fen ' + fen);
-            stockfish.postMessage('go depth ' + getAIDepth());
-            isAIThinking = true;
-        }
-        
-        function makeAIMove(move) {
-            var result = chess.move(move);
-            if (result) {
-                gameHistory.push({ from: move, to: move });
-                renderChessBoard();
-                if (chess.game_over()) {
-                    var resultText = chess.in_checkmate() ? 'Checkmate! AI wins.' : 'Draw.';
-                    alert(resultText + ' Game over.');
-                }
-            }
-            isAIThinking = false;
-        }
+        var isAIThinking = false;
+        var gameHistory = [];
         
         function renderChessBoard() {
-            var fen = chess.fen();
             var boardElement = document.getElementById('chessBoard');
+            if (!boardElement) return;
+            var fen = chess.fen();
             boardElement.innerHTML = fenToBoardHtml(fen);
             updateChessStatus();
         }
@@ -1147,7 +1099,7 @@
             var parts = fen.split(' ');
             var board = parts[0];
             var rows = board.split('/');
-            var html = '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;aspect-ratio:1/1;background:#1a1a2e;padding:8px;border-radius:12px;">';
+            var html = '<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;aspect-ratio:1/1;background:#1a1a2e;padding:4px;border-radius:12px;">';
             var pieceMap = { 'r':'♜','n':'♞','b':'♝','q':'♛','k':'♚','p':'♟','R':'♖','N':'♘','B':'♗','Q':'♕','K':'♔','P':'♙' };
             var rowIdx = 0;
             for (var r = 0; r < rows.length; r++) {
@@ -1158,14 +1110,17 @@
                     if (ch >= '1' && ch <= '8') {
                         for (var i = 0; i < parseInt(ch); i++) {
                             var isDark = (rowIdx + colIdx) % 2 === 1;
-                            html += '<div class="square" data-pos="' + String.fromCharCode(97+colIdx) + (8-rowIdx) + '" style="background:' + (isDark ? '#2c2c3e' : '#3a3a5c') + ';display:flex;align-items:center;justify-content:center;font-size:2.2rem;aspect-ratio:1/1;border-radius:4px;cursor:pointer;"></div>';
+                            var sq = String.fromCharCode(97 + colIdx) + (8 - rowIdx);
+                            html += '<div class="square" data-pos="' + sq + '" style="background:' + (isDark ? '#2c2c3e' : '#3a3a5c') + ';"></div>';
                             colIdx++;
                         }
                     } else {
                         var isDark = (rowIdx + colIdx) % 2 === 1;
                         var piece = pieceMap[ch] || ch;
                         var color = ch === ch.toUpperCase() ? '#fff' : '#aaa';
-                        html += '<div class="square" data-pos="' + String.fromCharCode(97+colIdx) + (8-rowIdx) + '" style="background:' + (isDark ? '#2c2c3e' : '#3a3a5c') + ';display:flex;align-items:center;justify-content:center;font-size:2.2rem;aspect-ratio:1/1;border-radius:4px;color:' + color + ';text-shadow:0 0 10px rgba(0,180,216,0.3);cursor:pointer;">' + piece + '</div>';
+                        var sq = String.fromCharCode(97 + colIdx) + (8 - rowIdx);
+                        var isSelected = (selectedSquare === sq);
+                        html += '<div class="square ' + (isSelected ? 'selected' : '') + '" data-pos="' + sq + '" style="background:' + (isDark ? '#2c2c3e' : '#3a3a5c') + ';color:' + color + ';text-shadow:0 0 10px rgba(0,180,216,0.3);">' + piece + '</div>';
                         colIdx++;
                     }
                 }
@@ -1190,30 +1145,62 @@
             if (!square || isAIThinking || chess.game_over()) return;
             var pos = square.dataset.pos;
             if (!pos) return;
-            var moves = chess.moves({ square: pos, verbose: true });
-            if (moves.length > 0) {
-                var move = moves[0];
-                var result = chess.move({ from: move.from, to: move.to, promotion: 'q' });
-                if (result) {
-                    gameHistory.push({ from: move.from, to: move.to });
+            
+            if (selectedSquare) {
+                var move = chess.move({ from: selectedSquare, to: pos, promotion: 'q' });
+                if (move) {
+                    selectedSquare = null;
+                    validMoves = [];
                     renderChessBoard();
-                    if (chess.game_over()) {
+                    if (!chess.game_over()) {
+                        document.getElementById('turnIndicator').textContent = 'AI thinking...';
+                        setTimeout(function() { makeAIMove(); }, 300);
+                    } else {
                         if (chess.in_checkmate()) {
                             chessScore += 10;
                             chessGamesWon++;
-                            document.getElementById('chessGamesWon').textContent = chessGamesWon;
-                            document.getElementById('chessScore').textContent = chessScore;
+                            showToast('🎉 Checkmate! You win!', 'success');
+                        } else {
+                            showToast('🤝 Game drawn.', 'warning');
                         }
-                        alert(chess.in_checkmate() ? 'Checkmate! You win!' : 'Draw.');
-                        return;
                     }
-                    if (chess.turn() === 'b') {
-                        document.getElementById('turnIndicator').textContent = 'AI thinking...';
-                        requestAIMove(chess.fen());
+                } else {
+                    var piece = chess.get(pos);
+                    if (piece && piece.color === 'w') {
+                        selectedSquare = pos;
+                        validMoves = chess.moves({ square: pos, verbose: true });
+                        renderChessBoard();
+                    } else {
+                        selectedSquare = null;
+                        validMoves = [];
+                        renderChessBoard();
                     }
+                }
+            } else {
+                var piece = chess.get(pos);
+                if (piece && piece.color === 'w') {
+                    selectedSquare = pos;
+                    validMoves = chess.moves({ square: pos, verbose: true });
+                    renderChessBoard();
                 }
             }
         });
+        
+        function makeAIMove() {
+            var moves = chess.moves();
+            if (moves.length === 0) { isAIThinking = false; return; }
+            var move = moves[Math.floor(Math.random() * moves.length)];
+            chess.move(move);
+            renderChessBoard();
+            if (chess.game_over()) {
+                if (chess.in_checkmate()) {
+                    showToast('♟️ Checkmate! AI wins.', 'error');
+                } else {
+                    showToast('🤝 Game drawn.', 'warning');
+                }
+            }
+            isAIThinking = false;
+        }
         
         function newChessGame() {
             chess = new Chess();
@@ -1231,10 +1218,9 @@
             if (gameHistory.length === 0) return;
             chess.undo();
             gameHistory.pop();
-            if (chess.turn() === 'b') {
-                chess.undo();
-                gameHistory.pop();
-            }
+            if (chess.turn() === 'b') { chess.undo(); gameHistory.pop(); }
+            selectedSquare = null;
+            validMoves = [];
             renderChessBoard();
         }
         
@@ -1387,7 +1373,6 @@
         // ============================================================
         function initApp() {
             console.log('🚀 Real Ngempela Recovery Centre · Initializing...');
-            initStockfish();
             renderChessBoard();
             newPrayer();
             loadSoberData();
