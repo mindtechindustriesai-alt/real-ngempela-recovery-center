@@ -8,13 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0-beta.8/chess.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     
     <style>
@@ -144,7 +142,7 @@
         
         .chess-board-wrapper { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
         #chessBoard { width: 100%; max-width: 450px; aspect-ratio: 1/1; }
-        .chess-square { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; cursor: pointer; transition: all 0.2s; position: relative; aspect-ratio: 1/1; border-radius: 4px; }
+        .chess-square { display: flex; align-items: center; justify-content: center; font-size: 2.2rem; cursor: pointer; transition: all 0.2s; position: relative; aspect-ratio: 1/1; border-radius: 4px; user-select: none; }
         .chess-square:hover { transform: scale(1.05); z-index: 10; }
         .light-square { background: rgba(42,42,58,0.8); }
         .dark-square { background: rgba(26,26,46,0.8); }
@@ -420,14 +418,14 @@
             </div>
         </div>
         
-        <!-- ===== SECTION: CHESS (FIXED) ===== -->
+        <!-- ===== SECTION: CHESS (FIXED — Event Delegation) ===== -->
         <div id="section-chess" class="section">
             <div class="glass-card">
                 <div class="card-header"><i class="fas fa-chess-king" style="color:var(--gold);"></i><h3>♟️ Chess Arena</h3></div>
                 <div class="chess-board-wrapper">
                     <div id="chessBoard"></div>
                     <div class="chess-sidebar">
-                        <div class="stat-item"><span>⚪ White to move</span><span id="turnIndicator">Yes</span></div>
+                        <div class="stat-item"><span>⚪ White to move</span><span id="turnIndicator">White</span></div>
                         <div class="stat-item"><span>Difficulty</span>
                             <select id="chessDifficulty" style="background:rgba(0,0,0,0.5);border:1px solid var(--glass-border);border-radius:30px;padding:4px 12px;color:white;">
                                 <option value="easy">Easy</option>
@@ -783,7 +781,7 @@
         function inviteChessWhatsApp() {
             var phone = document.getElementById('profilePhone').value || '27825551234';
             var clean = phone.replace(/\D/g, '');
-            var msg = encodeURIComponent('♟️ I challenge you to a chess game on Real Ngempela Recovery Centre! Join me and let\'s play: https://real-ngempela-recovery-center.onrender.com');
+            var msg = encodeURIComponent('♟️ I challenge you to a chess game on Real Ngempela Recovery Centre! Join me and let\'s play!');
             window.open('https://wa.me/' + clean + '?text=' + msg, '_blank');
             showToast('💬 Invite sent via WhatsApp!', 'success');
         }
@@ -1090,7 +1088,7 @@
         chatInput.onkeypress = function(e) { if (e.key === 'Enter') sendChatMessage(); };
         
         // ============================================================
-        // CHESS — FULLY FIXED WITH DIRECT CLICK HANDLING
+        // CHESS — FULLY FIXED WITH EVENT DELEGATION
         // ============================================================
         var chess = null;
         var isAIThinking = false;
@@ -1109,11 +1107,81 @@
                     chess = createFallbackChess(); 
                 }
                 renderChessBoard();
+                // Attach event listener ONCE using event delegation
+                setupChessClickHandler();
             } catch(e) { 
                 console.warn('Chess init error:', e); 
                 chess = createFallbackChess(); 
-                renderChessBoard(); 
+                renderChessBoard();
+                setupChessClickHandler();
             }
+        }
+        
+        function setupChessClickHandler() {
+            var board = document.getElementById('chessBoard');
+            // Remove any existing listeners by cloning
+            var newBoard = board.cloneNode(true);
+            board.parentNode.replaceChild(newBoard, board);
+            // Re-attach event listener
+            newBoard.addEventListener('click', function(e) {
+                var squareEl = e.target.closest('.chess-square');
+                if (!squareEl) return;
+                if (!chess || isAIThinking || chess.game_over()) return;
+                var pos = squareEl.dataset.pos;
+                if (!pos) return;
+                
+                // DEBUG
+                console.log('♟️ Clicked square:', pos);
+                
+                // If a square is already selected
+                if (selectedSquare) {
+                    // Try to move to this square
+                    var move = chess.move({ from: selectedSquare, to: pos, promotion: 'q' });
+                    if (move) {
+                        // Move was successful
+                        console.log('✅ Move made:', move.from, '->', move.to);
+                        gameHistory.push(move);
+                        selectedSquare = null;
+                        validMoves = [];
+                        renderChessBoard();
+                        // AI's turn
+                        if (!chess.game_over()) {
+                            document.getElementById('turnIndicator').textContent = 'AI thinking...';
+                            setTimeout(function() { makeAIMove(); }, 300);
+                        } else {
+                            if (chess.in_checkmate()) {
+                                chessScore += 10;
+                                chessGamesWon++;
+                                showToast('🎉 Checkmate! You win!', 'success');
+                            } else {
+                                showToast('🤝 Game drawn.', 'warning');
+                            }
+                        }
+                    } else {
+                        // Invalid move - check if clicking own piece to select it
+                        var piece = chess.get(pos);
+                        if (piece && piece.color === 'w') {
+                            selectedSquare = pos;
+                            validMoves = chess.moves({ square: pos, verbose: true });
+                            renderChessBoard();
+                        } else {
+                            selectedSquare = null;
+                            validMoves = [];
+                            renderChessBoard();
+                        }
+                    }
+                } else {
+                    // Select a white piece
+                    var piece = chess.get(pos);
+                    if (piece && piece.color === 'w') {
+                        selectedSquare = pos;
+                        validMoves = chess.moves({ square: pos, verbose: true });
+                        renderChessBoard();
+                    }
+                }
+            });
+            // Store reference for other functions
+            document.getElementById('chessBoard')._listenerAttached = true;
         }
         
         function createFallbackChess() {
@@ -1205,61 +1273,6 @@
             } catch(e) { console.warn('Update chess status error:', e); }
         }
         
-        // DIRECT CLICK HANDLER — attached to the board
-        document.getElementById('chessBoard').addEventListener('click', function(e) {
-            var squareEl = e.target.closest('.chess-square');
-            if (!squareEl) return;
-            if (!chess || isAIThinking || chess.game_over()) return;
-            var pos = squareEl.dataset.pos;
-            if (!pos) return;
-            
-            // If a square is already selected
-            if (selectedSquare) {
-                // Try to move to this square
-                var move = chess.move({ from: selectedSquare, to: pos, promotion: 'q' });
-                if (move) {
-                    // Move was successful
-                    gameHistory.push(move);
-                    selectedSquare = null;
-                    validMoves = [];
-                    renderChessBoard();
-                    // AI's turn
-                    if (!chess.game_over()) {
-                        document.getElementById('turnIndicator').textContent = 'AI thinking...';
-                        setTimeout(function() { makeAIMove(); }, 300);
-                    } else {
-                        if (chess.in_checkmate()) {
-                            chessScore += 10;
-                            chessGamesWon++;
-                            showToast('🎉 Checkmate! You win!', 'success');
-                        } else {
-                            showToast('🤝 Game drawn.', 'warning');
-                        }
-                    }
-                } else {
-                    // Invalid move - check if clicking own piece to select it
-                    var piece = chess.get(pos);
-                    if (piece && piece.color === 'w') {
-                        selectedSquare = pos;
-                        validMoves = chess.moves({ square: pos, verbose: true });
-                        renderChessBoard();
-                    } else {
-                        selectedSquare = null;
-                        validMoves = [];
-                        renderChessBoard();
-                    }
-                }
-            } else {
-                // Select a white piece
-                var piece = chess.get(pos);
-                if (piece && piece.color === 'w') {
-                    selectedSquare = pos;
-                    validMoves = chess.moves({ square: pos, verbose: true });
-                    renderChessBoard();
-                }
-            }
-        });
-        
         function makeAIMove() {
             try {
                 if (!chess || chess.game_over()) { isAIThinking = false; return; }
@@ -1310,12 +1323,10 @@
                 if (gameHistory.length === 0) return;
                 var lastMove = gameHistory.pop();
                 chess.undo();
-                if (chess.turn() === 'b') {
-                    // Undo AI move too if it was AI's turn
-                    if (gameHistory.length > 0) {
-                        gameHistory.pop();
-                        chess.undo();
-                    }
+                // If it was AI's turn, undo one more
+                if (chess.turn() === 'b' && gameHistory.length > 0) {
+                    gameHistory.pop();
+                    chess.undo();
                 }
                 selectedSquare = null; 
                 validMoves = [];
